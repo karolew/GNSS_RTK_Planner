@@ -1,0 +1,3 @@
+[submodule "microNMEA"]
+	path = microNMEA
+	url = https://github.com/karolew/microNMEA
