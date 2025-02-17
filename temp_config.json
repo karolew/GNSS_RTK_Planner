@@ -1,0 +1,21 @@
+{
+  "wifi":
+  {
+    "ssid": "<wifi_ssid>",
+    "password": "<wifi_password>"
+  },
+
+  "ntrip":
+  {
+    "host": "<ntrip_ip_address>",
+    "port": 8086,
+    "mountpoint": "<ntrip_mountpoint>",
+    "user": "<ntrip_user>",
+    "password": "<ntrip_password>"
+  },
+
+  "server":
+  {
+    "url": "<URL_of_RTK_Planner>/update_gps"
+  }
+}
