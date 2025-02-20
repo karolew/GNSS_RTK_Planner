@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GPS Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.css" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.js"></script>
+    <style>
+        .map {
+            height: 500px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .status-panel {
+            padding: 15px;
+            margin: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .status-valid {
+            color: green;
+        }
+        .status-invalid {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div id="map" class="map"></div>
+    <div class="status-panel">
+        <h3>GPS Status</h3>
+        <p>Fix Status: <span id="fix-status">Unknown</span></p>
+        <p>Raw Coordinates: <span id="raw-coords">-</span></p>
+        <p>Decimal Coordinates: <span id="dec-coords">-</span></p>
+        <p>Speed: <span id="speed">-</span></p>
+        <p>Course: <span id="course">-</span></p>
+        <p>GPS Time: <span id="gps-time">-</span></p>
+        <p>Last Update: <span id="last-update">-</span></p>
+    </div>
+    <script>
+        var map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([0, 0]),
+                zoom: 2
+            })
+        });
+
+        var marker = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.fromLonLat([0, 0]))
+        });
+
+        var vectorSource = new ol.source.Vector({
+            features: [marker]
+        });
+
+        var vectorLayer = new ol.layer.Vector({
+            source: vectorSource
+        });
+
+        map.addLayer(vectorLayer);
+
+        function formatUtcTime(timeStr) {
+            if (!timeStr) return '-';
+            return `${timeStr.slice(0,2)}:${timeStr.slice(2,4)}:${timeStr.slice(4,6)} UTC`;
+        }
+
+        function updateStatus() {
+            fetch('/get_coords')
+                .then(response => response.json())
+                .then(data => {
+                    // Update status panel
+                    document.getElementById('fix-status').textContent = data.fix_status;
+                    document.getElementById('fix-status').className =
+                        data.fix_status === 'Valid' ? 'status-valid' : 'status-invalid';
+
+                    document.getElementById('raw-coords').textContent =
+                        data.lat_raw && data.lon_raw ? `${data.lat_raw} / ${data.lon_raw}` : '-';
+
+                    document.getElementById('dec-coords').textContent =
+                        data.latitude && data.longitude ?
+                        `${data.latitude.toFixed(6)}°, ${data.longitude.toFixed(6)}°` : '-';
+
+                    document.getElementById('speed').textContent =
+                        data.speed !== null ? `${data.speed} knots` : '-';
+
+                    document.getElementById('course').textContent =
+                        data.course !== null ? `${data.course}°` : '-';
+
+                    document.getElementById('gps-time').textContent =
+                        data.time_utc ? formatUtcTime(data.time_utc) : '-';
+
+                    document.getElementById('last-update').textContent =
+                        data.last_update || '-';
+
+                    // Update map marker
+                    if (data.latitude && data.longitude) {
+                        var coords = ol.proj.fromLonLat([data.longitude, data.latitude]);
+                        marker.getGeometry().setCoordinates(coords);
+                        map.getView().setCenter(coords);
+                    }
+                });
+        }
+
+        // Update status every second
+        setInterval(updateStatus, 2000);
+    </script>
+</body>
+</html>
