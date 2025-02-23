@@ -9,9 +9,9 @@ from machine import UART
 from microNMEA.microNMEA import MicroNMEA
 
 try:
-    from ubinascii import b2a_base64 as b64encode
+    import ubinascii as ubin
 except:
-    from binascii import b2a_base64 as b64encode
+    import binascii as ubin
 
 
 class UARTReceiver:
@@ -33,18 +33,18 @@ class UARTReceiver:
 
                 if data:
                     for byte in data:
-                        if byte == ord('$'):
+                        if byte == ord("$"):
                             # Start of new message.
                             self.message_buffer = bytearray([byte])
                             self.receiving_message = True
                         elif self.receiving_message:
                             self.message_buffer.append(byte)
-                            if byte == ord('\n'):
+                            if byte == ord("\n"):
                                 # Message complete.
                                 message = bytes(self.message_buffer)
                                 self.receiving_message = False
                                 self.message_buffer = bytearray()
-                                return message.decode('utf-8')[:-2]
+                                return message.decode("utf-8")[:-2]
 
                         # Protection against buffer overflow
                         if len(self.message_buffer) > 1024:
@@ -74,7 +74,7 @@ class NTRIPClient:
             self.socket.connect((self.host, self.port))
 
             # Prepare authentication string
-            auth = b64encode(f"{self.username}:{self.password}".encode()).decode()
+            auth = ubin.b2a_base64(f"{self.username}:{self.password}".encode()).decode()
 
             # Create NTRIP request
             request = (
@@ -135,18 +135,24 @@ class WLAN:
         timeout_s = 20
         time_attempt = time.time()
         if not self.sta_if.isconnected():
-            print('Connecting to WiFi...')
+            print("Connecting to WiFi...")
             self.sta_if.active(True)
             self.sta_if.connect(self.ssid, self.password)
             while not self.sta_if.isconnected():
                 time.sleep(1)
                 if time_attempt + timeout_s < time.time():
                     print(f"Unable to connet WiFi network after {timeout_s} [s]. Retry.")
-            print('WiFi connected. Network config:', self.sta_if.ifconfig())
+            print("WiFi connected. Network config:", self.sta_if.ifconfig())
 
     def check(self):
         if not self.sta_if.isconnected():
             self.connect()
+
+    def get_mac(self):
+        if self.sta_if.isconnected():
+            mac_raw = self.sta_if.config("mac")
+            mymac = ubin.hexlify(mac_raw).decode()
+            return mymac
 
 
 def main():
@@ -174,20 +180,40 @@ def main():
     ntrip_client.connect()
 
     # RTK Planner.
-    SERVER_URL = config["server"]["url"]
+    RTKP_URL = config["server"]["url"]
+    RTKP_UPDATE_GPS = config["server"]["update_gps"]
+    RTKP_REGISTER = config["server"]["register"]
 
     # Data structure to send to RTK Planner.
     gps_data = {
-        'fix_status': "Unknowsn",
-        'latitude': None,
-        'longitude': None,
-        'lat_raw': None,
-        'lon_raw': None,
-        'speed': None,
-        'course': None,
-        'time_utc': None,
-        'last_update': None
+        "fix_status": "Unknowsn",
+        "latitude": None,
+        "longitude": None,
+        "lat_raw": None,
+        "lon_raw": None,
+        "speed": None,
+        "course": None,
+        "time_utc": None,
+        "last_update": None
     }
+
+    while True:
+        mac = wlan.get_mac()
+        try:
+            response = urequests.post(RTKP_URL + RTKP_REGISTER,
+                                      headers={"Content-Type": "application/json"},
+                                      json=json.dumps({"mac": mac}),
+                                      timeout=1)
+            response_code = response.status_code
+            response.close()
+            if response_code == 200:
+                print("Rover is registered.")
+                break
+            else:
+                print("Rover is NOT registered. Wait for confirmation.")
+        except Exception as e:
+            print(f"Failed to send mac: {e}")
+        time.sleep(2)
 
     time_start = time.time()
     while True:
@@ -216,18 +242,18 @@ def main():
                     gps_data["course"] = mn.course
                     gps_data["time_utc"] = mn.time
                     try:
-                        response = urequests.post(SERVER_URL,
-                                                  headers={'Content-Type': 'application/json'},
+                        response = urequests.post(RTKP_URL + RTKP_UPDATE_GPS,
+                                                  headers={"Content-Type": "application/json"},
                                                   json=json.dumps(gps_data),
                                                   timeout=1)
                         response.close()
                     except Exception as e:
-                        print(f'Failed to send data: {e}')
+                        print(f"Failed to send data: {e}")
                     time_start = time.time()
 
         except Exception as e:
-            print(f'Main loop error: {e}')
+            print(f"Main loop error: {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
