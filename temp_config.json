@@ -16,6 +16,6 @@
 
   "server":
   {
-    "url": "<URL_of_RTK_Planner>/update_gps"
+    "url": "<URL_of_RTK_Planner>"
   }
 }

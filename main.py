@@ -180,9 +180,7 @@ def main():
     ntrip_client.connect()
 
     # RTK Planner.
-    RTKP_URL = config["server"]["url"]
-    RTKP_UPDATE_GPS = config["server"]["update_gps"]
-    RTKP_REGISTER = config["server"]["register"]
+    rtkp_url = config["server"]["url"]
 
     # Data structure to send to RTK Planner.
     gps_data = {
@@ -200,7 +198,7 @@ def main():
     while True:
         mac = wlan.get_mac()
         try:
-            response = urequests.post(RTKP_URL + RTKP_REGISTER,
+            response = urequests.post(rtkp_url + "/register",
                                       headers={"Content-Type": "application/json"},
                                       json=json.dumps({"mac": mac}),
                                       timeout=1)
@@ -242,7 +240,7 @@ def main():
                     gps_data["course"] = mn.course
                     gps_data["time_utc"] = mn.time
                     try:
-                        response = urequests.post(RTKP_URL + RTKP_UPDATE_GPS,
+                        response = urequests.post(rtkp_url + "/update_gps",
                                                   headers={"Content-Type": "application/json"},
                                                   json=json.dumps(gps_data),
                                                   timeout=1)
