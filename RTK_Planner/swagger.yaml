@@ -1,0 +1,38 @@
+swagger: "2.0"
+info:
+  version: "1.0"                            
+  title: "RTK Planner"
+  description: "This is for path planning."
+
+
+paths:
+  /register:
+    post:
+      description: "Register device in application."
+      parameters:
+        - name: mac
+          in: body
+          description: "Rover MAC address."
+          schema:
+            type: object
+            required:
+              - mac
+            properties:
+              mac:
+               type: string
+      responses:
+        200:
+          description: "Rover already registered."
+        
+        400:
+          $ref: "#/responses/400Error"
+      
+
+responses:
+  400Error:
+    description: "Invalid request."
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
