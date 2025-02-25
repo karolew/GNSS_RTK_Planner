@@ -2,9 +2,13 @@ from flask import Flask, render_template, request, jsonify
 from datetime import datetime
 import logging
 import json
+import config
 
 app = Flask(__name__)
+# app = config.connex_app
+# app.add_api(config.basedir / "swagger.yaml")
 logging.basicConfig(level=logging.INFO)
+
 
 # Store the latest GPS data
 latest_gps_data = {
@@ -74,7 +78,6 @@ def register():
 @app.route("/get_coords")
 def get_coords():
     return jsonify(latest_gps_data)
-
 
 
 if __name__ == "__main__":
