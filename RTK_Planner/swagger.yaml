@@ -1,14 +1,14 @@
 swagger: "2.0"
 info:
-  version: "1.0"                            
+  version: "1.0"
   title: "RTK Planner"
   description: "This is for path planning."
 
-
 paths:
-  /register:
+  /rover/register:
     post:
       description: "Register device in application."
+      operationId: "rover.register"
       parameters:
         - name: mac
           in: body
@@ -23,10 +23,97 @@ paths:
       responses:
         200:
           description: "Rover already registered."
-        
+
         400:
           $ref: "#/responses/400Error"
-      
+
+  /rover/update_gps:
+    post:
+      description: "Register device in application."
+      operationId: "rover.update_gps"
+
+      parameters:
+        - name: gnssdata
+          in: body
+          description: "GNSS possition data."
+          schema:
+            $ref: "#/definitions/GPSData"
+
+      responses:
+        200:
+          description: "Rover already registered."
+
+        400:
+          $ref: "#/responses/400Error"
+
+  /rover/{name}:
+    get:
+      description: "Get rover by name."
+      operationId: "rover.get_by_name"
+
+      parameters:
+        - name: name
+          in: path
+          type: string
+          required: true
+          description: "Rover name."
+
+      responses:
+        200:
+          description: "Rover already registered."
+          schema:
+            $ref: "#/definitions/Rover"
+
+        400:
+          $ref: "#/responses/400Error"
+
+definitions:
+  Rover:
+    type: object
+    required:
+      - mac
+      - name
+    properties:
+      mac:
+        type: string
+      name:
+        type: string
+      status:
+        type: integer
+      last_active:
+        type: string
+
+  GPSData:
+    type: object
+    required:
+      - fix_status
+      - latitude
+      - longitude
+      - lat_raw
+      - lon_raw
+      - speed
+      - course
+      - time_utc
+      - last_update
+    properties:
+      fix_status:
+        type: string
+      latitude:
+        type: string
+      longitude:
+        type: string
+      lat_raw:
+        type: string
+      lon_raw:
+        type: string
+      speed:
+        type: string
+      course:
+        type: string
+      time_utc:
+        type: string
+      last_update:
+        type: string
 
 responses:
   400Error:
