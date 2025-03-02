@@ -4,6 +4,7 @@ info:
   title: "RTK Planner"
   description: "This is for path planning."
 
+
 paths:
   /rover/register:
     post:
@@ -54,13 +55,12 @@ paths:
       parameters:
         - name: name
           in: path
-          type: string
           required: true
-          description: "Rover name."
+          type: string
 
       responses:
         200:
-          description: "Rover already registered."
+          description: "Successfully get rover by name"
           schema:
             $ref: "#/definitions/Rover"
 
