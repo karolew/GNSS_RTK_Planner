@@ -13,10 +13,10 @@ class Status(enum.Enum):
 
 
 class RoverTrail(sqla.Model):
-    __tablename__ = "rover_trial"
+    __tablename__ = "RoverTrial"
     id = sqla.Column(sqla.Integer, primary_key=True)
-    rover_id = sqla.Column("rover_id", sqla.Integer, sqla.ForeignKey("rovers.id"))
-    trail_id = sqla.Column("trail_id", sqla.Integer, sqla.ForeignKey("trails.id"))
+    rover_id = sqla.Column("rover_id", sqla.Integer, sqla.ForeignKey("Rover.id"))
+    trail_id = sqla.Column("trail_id", sqla.Integer, sqla.ForeignKey("Trail.id"))
 
 
 class RoverTrailSchema(mars.SQLAlchemyAutoSchema):
@@ -24,37 +24,50 @@ class RoverTrailSchema(mars.SQLAlchemyAutoSchema):
         model = RoverTrail
         load_instance = True
         sqla_session = sqla.session
+        include_fk = True
 
 
 rovertrail_schema = RoverTrailSchema()
 
 
 class Rover(sqla.Model):
-    __tablename__ = "rovers"
+    __tablename__ = "Rover"
     id = sqla.Column(sqla.Integer, primary_key=True)
     mac = sqla.Column(sqla.String, unique=True, nullable=False)
     name = sqla.Column(sqla.String, unique=True, nullable=False)
     status = sqla.Column(sqla.Integer, default=Status.unknown.value)
     last_active = sqla.Column(sqla.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    trails = sqla.relationship("Trail", secondary="rover_trial", back_populates="rovers")
+    trails = sqla.relationship("Trail", secondary="RoverTrial", back_populates="Rover")
 
 
-class RoverSchema(sqla.SQLAlchemyAutoSchema):
+class RoverSchema(mars.SQLAlchemyAutoSchema):
     class Meta:
         model = Rover
         load_instance = True
         sqla_session = sqla.session
+        include_relationships = True
 
 
 rover_schema = RoverSchema()
 
 
 class Trail(sqla.Model):
-    __tablename__ = "trails"
+    __tablename__ = "Trail"
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String, unique=True, nullable=False)
     trail_points = sqla.Column(sqla.String, unique=True, nullable=False)
-    rovers = sqla.relationship("Rover", secondary="rover_trial", back_populates="trails")
+    rovers = sqla.relationship("Rover", secondary="RoverTrial", back_populates="Trail")
+
+
+class TrailSchema(mars.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Trail
+        load_instance = True
+        sqla_session = sqla.session
+        include_relationships = True
+
+
+trail_schema = TrailSchema()
 
 
 if __name__ == "__main__":
@@ -65,13 +78,12 @@ if __name__ == "__main__":
 
     sqla.Base.metadata.create_all(engine)
 
-    #rover2 = Rover(mac="2", name="Rover2")
-    #rover1 = Rover(mac="1", name="Rover1")
-    #trail1 = Trail(trail_points="1.2,3.3;1.2,3.4", rovers=[rover1])
-    #trail2 = Trail(trail_points="1.2,3.3;1.2,3.4;1.2,3.5", rovers=[rover1, rover2])
-
-    #session.add_all([rover1, rover2, trail1, trail2])
-    #session.commit()
+    rover2 = Rover(mac="2", name="Rover2")
+    rover1 = Rover(mac="1", name="Rover1")
+    trail1 = Trail(trail_points="1.2,3.3;1.2,3.4", rovers=[rover1])
+    trail2 = Trail(trail_points="1.2,3.3;1.2,3.4;1.2,3.5", rovers=[rover1, rover2])
+    session.add_all([rover1, rover2, trail1, trail2])
+    session.commit()
 
 
     def new_rover(rover_mac: str, rover_name: str) -> None:
