@@ -93,8 +93,8 @@ if __name__ == "__main__":
 
     trail1 = Trail(name="a", trail_points="1.2,3.3;1.2,3.4")
     trail2 = Trail(name="b", trail_points="1.2,3.3;1.2,3.4;1.2,3.5")
-    rover1 = Rover(mac="11", name="Rover11", status=1, last_active=datetime.today(), trails=[trail1])
-    rover2 = Rover(mac="21", name="Rover21", status=1, last_active=datetime.today(), trails=[trail2, trail1])
+    rover1 = Rover(mac="a8032a56ae8c", name="Rover1", status=1, last_active=datetime.today(), trails=[trail1])
+    rover2 = Rover(mac="21", name="Rover2", status=1, last_active=datetime.today(), trails=[trail2, trail1])
     session.add_all([rover1, rover2, trail1, trail2])
     session.commit()
 

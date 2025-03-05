@@ -198,7 +198,7 @@ def main():
     while True:
         mac = wlan.get_mac()
         try:
-            response = urequests.post(rtkp_url + "/register",
+            response = urequests.post(rtkp_url + "/rover/register",
                                       headers={"Content-Type": "application/json"},
                                       json=json.dumps({"mac": mac}),
                                       timeout=1)
@@ -240,7 +240,7 @@ def main():
                     gps_data["course"] = mn.course
                     gps_data["time_utc"] = mn.time
                     try:
-                        response = urequests.post(rtkp_url + "/update_gps",
+                        response = urequests.post(rtkp_url + "/rover/update_gps",
                                                   headers={"Content-Type": "application/json"},
                                                   json=json.dumps(gps_data),
                                                   timeout=1)

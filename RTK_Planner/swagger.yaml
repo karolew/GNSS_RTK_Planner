@@ -4,7 +4,6 @@ info:
   title: "RTK Planner"
   description: "This is for path planning."
 
-
 paths:
   /rover/register:
     post:
@@ -15,7 +14,7 @@ paths:
           in: body
           description: "Rover MAC address."
           schema:
-            type: object
+            type: string
             required:
               - mac
             properties:
@@ -28,7 +27,7 @@ paths:
         400:
           $ref: "#/responses/400Error"
 
-  /rover/update_gps:
+  /rover/update_gps1:
     post:
       description: "Register device in application."
       operationId: "rover.update_gps"
@@ -38,7 +37,7 @@ paths:
           in: body
           description: "GNSS possition data."
           schema:
-            $ref: "#/definitions/GPSData"
+            $ref: "#/definitions/GNSSdata"
 
       responses:
         200:
@@ -83,18 +82,12 @@ definitions:
       last_active:
         type: string
 
-  GPSData:
+  GNSSdata:
     type: object
     required:
       - fix_status
       - latitude
       - longitude
-      - lat_raw
-      - lon_raw
-      - speed
-      - course
-      - time_utc
-      - last_update
     properties:
       fix_status:
         type: string
