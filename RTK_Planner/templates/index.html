@@ -10,6 +10,12 @@
             width: 100%;
             margin-bottom: 20px;
         }
+        .control-panel {
+            padding: 15px;
+            margin: 10px;
+            background-color: #d1d1d1;
+            border-radius: 5px;
+        }
         .status-panel {
             padding: 15px;
             margin: 10px;
@@ -26,6 +32,16 @@
 </head>
 <body>
     <div id="map" class="map"></div>
+
+    <div class="control-panel">
+    <label for="rovers">Select Rover:</label>
+      <select name="rovers" id="cars">
+          {% for rover in rovers %}
+          <option value="{{rover.name}}">{{rover.name}} ({{rover.mac}})</option>
+          {% endfor %}
+      </select>
+    </div>
+
     <div class="status-panel">
         <h3>GPS Status</h3>
         <p>Fix Status: <span id="fix-status">Unknown</span></p>
@@ -106,7 +122,7 @@
                 });
         }
 
-        // Update status every second
+        // Update status given milliseconds
         setInterval(updateStatus, 2000);
     </script>
 </body>

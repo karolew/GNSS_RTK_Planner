@@ -10,7 +10,8 @@ app.add_api(config.basedir / "swagger.yaml")
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    all_rovers = rover.get_all()
+    return render_template("index.html", rovers=all_rovers)
 
 
 @app.route("/get_coords")

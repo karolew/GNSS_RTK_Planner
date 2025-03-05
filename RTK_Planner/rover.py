@@ -1,5 +1,5 @@
 from flask import abort, make_response, request, jsonify
-from model import RoverTrail, Rover, rover_with_trails_schema, trail_with_rovers_schema, rover_schema
+from model import RoverTrail, Rover, rover_with_trails_schema, rovers_schema, trail_with_rovers_schema, rover_schema
 from config import sqla
 import json
 from datetime import datetime
@@ -23,6 +23,11 @@ def get_by_name(name):
         return rover_schema.dump(_rover)
     else:
         return abort(404, "Rover not found.")
+
+
+def get_all():
+    _rovers = Rover.query.all()
+    return rovers_schema.dump(_rovers)
 
 
 def register(mac):

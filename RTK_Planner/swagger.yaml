@@ -62,9 +62,17 @@ paths:
           description: "Successfully get rover by name"
           schema:
             $ref: "#/definitions/Rover"
-
         400:
           $ref: "#/responses/400Error"
+
+  /rover:
+    get:
+      description: "Get all rovers."
+      operationId: "rover.get_all"
+
+      responses:
+        200:
+          description: "Successfully get rovers."
 
 definitions:
   Rover:
