@@ -35,12 +35,20 @@
 
     <div class="control-panel">
     <label for="rovers">Select Rover:</label>
-      <select name="rovers" id="cars">
+      <select name="rovers" id="rovers">
           {% for rover in rovers %}
           <option value="{{rover.name}}">{{rover.name}} ({{rover.mac}})</option>
           {% endfor %}
       </select>
+
+    <label for="trails">Select Trail:</label>
+      <select name="trails" id="trails">
+          {% for rover in rovers %}
+          <option value="{{rover.trails}}">{{rover.trails}} ({{rover.mac}})</option>
+          {% endfor %}
+      </select>
     </div>
+
 
     <div class="status-panel">
         <h3>GPS Status</h3>
