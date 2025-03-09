@@ -73,6 +73,10 @@ paths:
       responses:
         200:
           description: "Successfully get rovers."
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Rover"
 
 definitions:
   Rover:
