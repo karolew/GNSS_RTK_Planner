@@ -2,9 +2,6 @@
 <html>
 <head>
     <title>GPS Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rover Trail Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.css" type="text/css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.js"></script>
     <style>
@@ -31,12 +28,6 @@
         .status-invalid {
             color: red;
         }
-        .control-panel {
-            padding: 15px;
-            margin: 10px;
-            background-color: #d1d1d1;
-            border-radius: 5px;
-        }
     </style>
 </head>
 <body>
@@ -44,15 +35,17 @@
 
     <div class="control-panel">
         <label for="roverSelect">Select Rover:</label>
-        <select id="roverSelect">
+        <select class="form-control" id="roverSelect">
             <option value="">-- Select a Rover --</option>
         </select>
 
         <label for="trailSelect">Select Trail:</label>
-        <select id="trailSelect" disabled>
+        <select class="form-control" id="trailSelect" disabled>
             <option value="">-- Select a Trail --</option>
         </select>
     </div>
+
+
 
     <div class="status-panel">
         <h3>GPS Status</h3>
@@ -64,10 +57,7 @@
         <p>GPS Time: <span id="gps-time">-</span></p>
         <p>Last Update: <span id="last-update">-</span></p>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Function to update the dropdown elements
         function updateElements() {
             // Load all rovers into the first dropdown
             $.getJSON('/rover', function(data) {
@@ -108,7 +98,6 @@
                 }
             });
         }
-
 
 
         var map = new ol.Map({
@@ -180,13 +169,11 @@
                 });
         }
 
-        // Call the function when the document is ready
+        // Update status given milliseconds
+        setInterval(updateStatus, 2000);
         $(document).ready(function() {
             updateElements();
         });
-
-        // Update status given milliseconds
-        setInterval(updateStatus, 2000);
     </script>
 </body>
 </html>

@@ -78,6 +78,26 @@ paths:
             items:
               $ref: "#/definitions/Rover"
 
+  /trail/{rover_id}:
+    get:
+      description: "Get trails for a specific rover"
+      operationId: "trail.get_trails_by_rover"
+
+      parameters:
+        - name: rover_id
+          in: path
+          required: true
+          type: integer
+      responses:
+        200:
+          description: "A list of trails associated with the rover"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Trail'
+        404:
+          description: Rover not found
+
 definitions:
   Rover:
     type: object
@@ -92,6 +112,19 @@ definitions:
       status:
         type: integer
       last_active:
+        type: string
+
+  Trail:
+    type: object
+    required:
+      - id
+      - name
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      trail_points:
         type: string
 
   GNSSdata:
