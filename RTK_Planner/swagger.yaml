@@ -26,7 +26,7 @@ paths:
         400:
           $ref: "#/responses/400Error"
 
-  /rover/check-mac/{mac}:
+  /rover/check_mac/{mac}:
     get:
       description: "Check if a MAC address already exists"
       operationId: "rover.check_mac_exists"
@@ -37,7 +37,7 @@ paths:
           type: string
       responses:
         200:
-          description: "Result of the check"
+          description: "Result of MAC check"
           schema:
             type: object
             properties:
@@ -56,17 +56,17 @@ paths:
 
   /rover/update_gps:
     post:
-      description: "Register device in application."
+      description: "Send GNSS data to server."
       operationId: "rover.update_gps"
       parameters:
         - name: gnssdata
           in: body
-          description: "GNSS possition data."
+          description: "GNSS data."
           schema:
             $ref: "#/definitions/GNSSdata"
       responses:
         200:
-          description: "Rover already registered."
+          description: "Successfully get GNSS data."
         400:
           $ref: "#/responses/400Error"
 
@@ -160,7 +160,7 @@ definitions:
         type: string
 
   GNSSdata:
-    type: object
+    type: string
     required:
       - fix_status
       - latitude

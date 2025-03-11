@@ -79,3 +79,33 @@ def format_utc_time(time_str):
         return f"{hour}:{minute}:{second} UTC"
     except:
         return time_str
+
+
+def create_rover():
+    """Create a new rover with associated trails using SQLAlchemy"""
+    data = request.get_json()
+
+    # Check if MAC already exists using SQLAlchemy query
+    if Rover.query.filter(Rover.mac == data['mac']).first() is not None:
+        return {"error": "MAC address already exists"}, 400
+
+    # Create new rover object
+    new_rover = Rover(
+        mac=data['mac'],
+        name=data['name'],
+        status='Idle'  # Default status
+    )
+
+    # Associate trails if provided
+    if 'trail_ids' in data and data['trail_ids']:
+        # Query all selected trails at once using SQLAlchemy
+        trails = db.session.query(Trail).filter(Trail.id.in_(data['trail_ids'])).all()
+        new_rover.trails = trails
+
+    # Add to session and commit the transaction
+    db.session.add(new_rover)
+    db.session.commit()
+
+    # Return the new rover
+    rover_schema = RoverSchema()
+    return rover_schema.dump(new_rover)
