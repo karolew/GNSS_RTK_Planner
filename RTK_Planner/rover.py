@@ -17,6 +17,10 @@ latest_gps_data = {
 }
 
 
+def get_coords():
+    return jsonify(latest_gps_data)
+
+
 def get_by_name(name):
     _rover = Rover.query.filter(Rover.name == name).one_or_none()
     if _rover is not None:
@@ -57,6 +61,11 @@ def update_gps(gnssdata):
         return "GPS Updated", 201
     else:
         return abort(406, "New rover registration.")
+
+
+def check_mac_exists(mac: str):
+    exists = Rover.query.filter(Rover.mac == mac).first() is not None
+    return {"exists": exists}
 
 
 def format_utc_time(time_str):

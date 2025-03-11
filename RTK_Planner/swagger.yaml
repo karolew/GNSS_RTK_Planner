@@ -23,26 +23,50 @@ paths:
       responses:
         200:
           description: "Rover already registered."
-
         400:
           $ref: "#/responses/400Error"
 
-  /rover/update_gps1:
+  /rover/check-mac/{mac}:
+    get:
+      description: "Check if a MAC address already exists"
+      operationId: "rover.check_mac_exists"
+      parameters:
+        - name: mac
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: "Result of the check"
+          schema:
+            type: object
+            properties:
+              exists:
+                type: boolean
+
+  /rover/get_coords:
+    get:
+      description: "Refresh coordinates on page"
+      operationId: "rover.get_coords"
+      responses:
+        200:
+          description: "Refresh GNSS possition data."
+          schema:
+            $ref: "#/definitions/GNSSdata"
+
+  /rover/update_gps:
     post:
       description: "Register device in application."
       operationId: "rover.update_gps"
-
       parameters:
         - name: gnssdata
           in: body
           description: "GNSS possition data."
           schema:
             $ref: "#/definitions/GNSSdata"
-
       responses:
         200:
           description: "Rover already registered."
-
         400:
           $ref: "#/responses/400Error"
 
@@ -50,13 +74,11 @@ paths:
     get:
       description: "Get rover by name."
       operationId: "rover.get_by_name"
-
       parameters:
         - name: name
           in: path
           required: true
           type: string
-
       responses:
         200:
           description: "Successfully get rover by name"
@@ -69,20 +91,30 @@ paths:
     get:
       description: "Get all rovers."
       operationId: "rover.get_all"
-
       responses:
         200:
-          description: "Successfully get rovers."
+          description: "Successfully get rovers as list."
           schema:
             type: array
             items:
               $ref: "#/definitions/Rover"
 
+  /trail:
+    get:
+      description: "Get all available trails"
+      operationId: "trail.get_all"
+      responses:
+        200:
+          description: "Successfully get trails as list."
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Trail'
+
   /trail/{rover_id}:
     get:
       description: "Get trails for a specific rover"
       operationId: "trail.get_trails_by_rover"
-
       parameters:
         - name: rover_id
           in: path

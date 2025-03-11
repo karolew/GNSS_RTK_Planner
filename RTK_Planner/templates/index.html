@@ -144,7 +144,7 @@
         }
 
         function updateStatus() {
-            fetch('/get_coords')
+            fetch('/rover/get_coords')
                 .then(response => response.json())
                 .then(data => {
                     // Update status panel
