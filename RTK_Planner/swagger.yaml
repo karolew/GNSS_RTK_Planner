@@ -98,6 +98,21 @@ paths:
             type: array
             items:
               $ref: "#/definitions/Rover"
+    post:
+      description: "Create rover."
+      operationId: "rover.create_rover"
+      parameters:
+        - name: rover
+          in: body
+          description: "Rover data."
+          schema:
+            $ref: "#/definitions/Rover"
+      responses:
+        200:
+          description: "Successfully get GNSS data."
+        400:
+          $ref: "#/responses/400Error"
+
 
   /trail:
     get:
@@ -122,13 +137,13 @@ paths:
           type: integer
       responses:
         200:
-          description: "A list of trails associated with the rover"
+          description: "New Rover createdr"
           schema:
-            type: array
+            type: object
             items:
-              $ref: '#/definitions/Trail'
+              $ref: '#/definitions/Rover'
         404:
-          description: Rover not found
+          $ref: "#/responses/400Error"
 
 definitions:
   Rover:

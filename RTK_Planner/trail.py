@@ -11,7 +11,5 @@ def get_all():
 
 
 def get_trails_by_rover(rover_id):
-    rover = Rover.query.get_or_404(rover_id)
-    trails = rover.trails
-    trail_schema = TrailSchema(many=True)
-    return trail_schema.dump(trails)
+    rover = Rover.query.filter(Rover.id == rover_id).one_or_none()
+    return trails_schema.dump(rover.trails)
