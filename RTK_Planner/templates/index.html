@@ -51,12 +51,24 @@
             margin-top: 10px;
             display: none;
         }
+        .btn-primary {
+            margin-bottom: 20px;
+            background-color: gray;
+            border-color: gray;
+        }
     </style>
 </head>
 <body>
     <div id="map" class="map"></div>
 
     <div class="control-panel">
+
+        <div>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoverModal">
+                Add Rover
+            </button>
+        </div>
+
         <label for="roverSelect">Select Rover:</label>
         <select id="roverSelect">
             <option value="">-- Select a Rover --</option>
@@ -66,12 +78,6 @@
         <select id="trailSelect" disabled>
             <option value="">-- Select a Trail --</option>
         </select>
-
-        <div>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoverModal">
-                Add Rover
-            </button>
-        </div>
     </div>
 
     <div class="status-panel">
@@ -84,45 +90,6 @@
         <p>GPS Time: <span id="gps-time">-</span></p>
         <p>Last Update: <span id="last-update">-</span></p>
     </div>
-
-
-<!-- Add Rover Modal -->
-    <div class="modal fade" id="addRoverModal" tabindex="-1" aria-labelledby="addRoverModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addRoverModalLabel">Add New Rover</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger" id="macErrorAlert" role="alert">
-                        This MAC address already exists in the database!
-                    </div>
-                    <form id="addRoverForm">
-                        <div class="mb-3">
-                            <label for="macInput" class="form-label">MAC Address</label>
-                            <input type="text" class="form-control" id="macInput" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="nameInput" class="form-label">Rover Name</label>
-                            <input type="text" class="form-control" id="nameInput" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Trails</label>
-                            <div class="checkbox-list" id="trailCheckboxes">
-                                <!-- Trail checkboxes will be dynamically added here -->
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="addRoverBtn">Add</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 
     <script>
         // Function to update the dropdown elements
@@ -166,86 +133,6 @@
                 }
             });
         }
-
-        function loadTrailCheckboxes() {
-            const checkboxContainer = $('#trailCheckboxes');
-            checkboxContainer.empty();
-
-            $.getJSON('/trail/get_all', function(data) {
-                $.each(data, function(index, trail) {
-                    const checkboxDiv = $('<div class="form-check">');
-                    const checkbox = $('<input class="form-check-input" type="checkbox">')
-                        .attr('id', 'trail-' + trail.id)
-                        .attr('value', trail.id);
-                    const label = $('<label class="form-check-label">')
-                        .attr('for', 'trail-' + trail.id)
-                        .text(trail.name);
-
-                    checkboxDiv.append(checkbox, label);
-                    checkboxContainer.append(checkboxDiv);
-                });
-            });
-        }
-
-        // Function to check if MAC address already exists
-        function checkMacExists(mac, callback) {
-            $.getJSON('/rover/check_mac/' + encodeURIComponent(mac), function(data) {
-                callback(data.exists);
-            });
-        }
-
-        // Function to add a new rover
-        function addRover() {
-            const mac = $('#macInput').val().trim();
-            const name = $('#nameInput').val().trim();
-            const selectedTrails = [];
-
-            // Get all selected trail checkboxes
-            $('#trailCheckboxes input:checked').each(function() {
-                selectedTrails.push(parseInt($(this).val()));
-            });
-
-            // Check if MAC already exists
-            checkMacExists(mac, function(exists) {
-                if (exists) {
-                    // Show error message
-                    $('#macErrorAlert').show();
-                } else {
-                    // Hide error message if visible
-                    $('#macErrorAlert').hide();
-
-                    // Create the data object to send
-                    const roverData = {
-                        mac: mac,
-                        name: name,
-                        trail_ids: selectedTrails
-                    };
-
-                    // Send the data to the server
-                    $.ajax({
-                        url: '/api/rovers',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify(roverData),
-                        success: function(response) {
-                            // Close the modal
-                            $('#addRoverModal').modal('hide');
-
-                            // Reset the form
-                            $('#addRoverForm')[0].reset();
-
-                            // Update the dropdowns to include the new rover
-                            updateElements();
-                        },
-                        error: function(xhr) {
-                            alert('Error adding rover: ' + xhr.responseText);
-                        }
-                    });
-                }
-            });
-         }
-
-
 
         var map = new ol.Map({
             target: 'map',
@@ -319,28 +206,10 @@
         // Call the function when the document is ready
         $(document).ready(function() {
             updateElements();
-
-            // Load trail checkboxes when the modal is about to be shown
-            $('#addRoverModal').on('show.bs.modal', function() {
-                loadTrailCheckboxes();
-                // Hide error message if visible
-                $('#macErrorAlert').hide();
-                // Reset the form
-                $('#addRoverForm')[0].reset();
-            });
-
-            // Add event handler for the Add button
-            $('#addRoverBtn').click(addRover);
-
-            // Clear error message when MAC input changes
-            $('#macInput').on('input', function() {
-                $('#macErrorAlert').hide();
-            });
-
         });
 
         // Update status given milliseconds
-        setInterval(updateStatus, 2000);
+        //setInterval(updateStatus, 2000);
     </script>
 </body>
 </html>
