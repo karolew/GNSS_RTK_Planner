@@ -4,59 +4,18 @@
     <title>GPS Tracker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rover Trail Management</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.css" type="text/css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <style>
-        .map {
-            height: 500px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        .control-panel {
-            padding: 15px;
-            margin: 10px;
-            background-color: #d1d1d1;
-            border-radius: 5px;
-        }
-        .status-panel {
-            padding: 15px;
-            margin: 10px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-        }
-        .status-valid {
-            color: green;
-        }
-        .status-invalid {
-            color: red;
-        }
-        .container {
-            max-width: 800px;
-            margin-top: 50px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .modal-body {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .checkbox-list {
-            margin-top: 10px;
-        }
-        .alert {
-            margin-top: 10px;
-            display: none;
-        }
-        .btn-primary {
-            margin-bottom: 20px;
-            background-color: gray;
-            border-color: gray;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script src="{{ url_for('static', filename='js/index.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/select_rover.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}" type="module"></script>
+
 </head>
 <body>
     <div id="map" class="map"></div>
@@ -97,125 +56,5 @@
         {% include "__debug.html" %}
     {% endif %}
 
-    <script>
-        // Function to update the dropdown elements
-        function updateElements() {
-            // Load all rovers into the first dropdown
-            $.getJSON('/rover', function(data) {
-                const roverSelect = $('#roverSelect');
-
-                $.each(data, function(index, rover) {
-                    roverSelect.append($('<option>', {
-                        value: rover.id,
-                        text: rover.name
-                    }));
-                });
-            });
-
-            // Set up the event handler for rover selection
-            $('#roverSelect').change(function() {
-                const roverId = $(this).val();
-                const trailSelect = $('#trailSelect');
-
-                // Clear previous options
-                trailSelect.find('option').not(':first').remove();
-
-                if (roverId) {
-                    // Enable the trail dropdown
-                    trailSelect.prop('disabled', false);
-
-                    // Load trails for the selected rover
-                    $.getJSON(`/trail/${roverId}`, function(data) {
-                        $.each(data, function(index, trail) {
-                            trailSelect.append($('<option>', {
-                                value: trail.id,
-                                text: trail.name
-                            }));
-                        });
-                    });
-                } else {
-                    // Disable the trail dropdown if no rover is selected
-                    trailSelect.prop('disabled', true);
-                }
-            });
-        }
-
-        var map = new ol.Map({
-            target: 'map',
-            layers: [
-                new ol.layer.Tile({
-                    source: new ol.source.OSM()
-                })
-            ],
-            view: new ol.View({
-                center: ol.proj.fromLonLat([0, 0]),
-                zoom: 2
-            })
-        });
-
-        var marker = new ol.Feature({
-            geometry: new ol.geom.Point(ol.proj.fromLonLat([0, 0]))
-        });
-
-        var vectorSource = new ol.source.Vector({
-            features: [marker]
-        });
-
-        var vectorLayer = new ol.layer.Vector({
-            source: vectorSource
-        });
-
-        map.addLayer(vectorLayer);
-
-        function formatUtcTime(timeStr) {
-            if (!timeStr) return '-';
-            return `${timeStr.slice(0,2)}:${timeStr.slice(2,4)}:${timeStr.slice(4,6)} UTC`;
-        }
-
-        function updateStatus() {
-            fetch('/rover/get_coords')
-                .then(response => response.json())
-                .then(data => {
-                    // Update status panel
-                    document.getElementById('fix-status').textContent = data.fix_status;
-                    document.getElementById('fix-status').className =
-                        data.fix_status === 'Valid' ? 'status-valid' : 'status-invalid';
-
-                    document.getElementById('raw-coords').textContent =
-                        data.lat_raw && data.lon_raw ? `${data.lat_raw} / ${data.lon_raw}` : '-';
-
-                    document.getElementById('dec-coords').textContent =
-                        data.latitude && data.longitude ?
-                        `${data.latitude.toFixed(6)}°, ${data.longitude.toFixed(6)}°` : '-';
-
-                    document.getElementById('speed').textContent =
-                        data.speed !== null ? `${data.speed} knots` : '-';
-
-                    document.getElementById('course').textContent =
-                        data.course !== null ? `${data.course}°` : '-';
-
-                    document.getElementById('gps-time').textContent =
-                        data.time_utc ? formatUtcTime(data.time_utc) : '-';
-
-                    document.getElementById('last-update').textContent =
-                        data.last_update || '-';
-
-                    // Update map marker
-                    if (data.latitude && data.longitude) {
-                        var coords = ol.proj.fromLonLat([data.longitude, data.latitude]);
-                        marker.getGeometry().setCoordinates(coords);
-                        map.getView().setCenter(coords);
-                    }
-                });
-        }
-
-        // Call the function when the document is ready
-        $(document).ready(function() {
-            updateElements();
-        });
-
-        // Update status given milliseconds
-        //setInterval(updateStatus, 2000);
-    </script>
 </body>
 </html>

@@ -1,0 +1,56 @@
+.map {
+    height: 500px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.control-panel {
+    padding: 15px;
+    margin: 10px;
+    background-color: #d1d1d1;
+    border-radius: 5px;
+}
+
+.status-panel {
+    padding: 15px;
+    margin: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.status-valid {
+    color: green;
+}
+
+.status-invalid {
+    color: red;
+}
+
+.container {
+    max-width: 800px;
+    margin-top: 50px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.modal-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.checkbox-list {
+    margin-top: 10px;
+}
+
+.alert {
+    margin-top: 10px;
+    display: none;
+}
+
+.btn-primary {
+    margin-bottom: 20px;
+    background-color: gray;
+    border-color: gray;
+}
