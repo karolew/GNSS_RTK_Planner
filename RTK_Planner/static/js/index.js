@@ -1,4 +1,4 @@
-import { DebugForm } from "./debug.js";
+import { DebugForm } from "./debug.js"; 
 
 function main() {
     if (document.querySelector(".debug-card")) {
