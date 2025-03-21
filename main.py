@@ -184,6 +184,7 @@ def main():
 
     # Data structure to send to RTK Planner.
     gps_data = {
+        "mac": None,
         "fix_status": "Unknowsn",
         "latitude": None,
         "longitude": None,
@@ -195,8 +196,8 @@ def main():
         "last_update": None
     }
 
+    mac = wlan.get_mac()
     while True:
-        mac = wlan.get_mac()
         try:
             response = urequests.post(rtkp_url + "/rover/register",
                                       headers={"Content-Type": "application/json"},
@@ -239,6 +240,7 @@ def main():
                     gps_data["speed"] = mn.speed
                     gps_data["course"] = mn.course
                     gps_data["time_utc"] = mn.time
+                    gps_data["mac"] = mac
                     try:
                         response = urequests.post(rtkp_url + "/rover/update_gps",
                                                   headers={"Content-Type": "application/json"},

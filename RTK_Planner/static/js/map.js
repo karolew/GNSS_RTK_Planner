@@ -34,35 +34,38 @@ export function updateStatus() {
     fetch('/rover/get_coords')
         .then(response => response.json())
         .then(data => {
-            // Update status panel
-            document.getElementById('fix-status').textContent = data.fix_status;
-            document.getElementById('fix-status').className =
-                data.fix_status === 'Valid' ? 'status-valid' : 'status-invalid';
+            if (data) {
 
-            document.getElementById('raw-coords').textContent =
-                data.lat_raw && data.lon_raw ? `${data.lat_raw} / ${data.lon_raw}` : '-';
+                // Update status panel
+                document.getElementById(data.mac + '-fix-status').textContent = data.fix_status;
+                document.getElementById(data.mac + '-fix-status').className =
+                    data.fix_status === 'Valid' ? 'status-valid' : 'status-invalid';
 
-            document.getElementById('dec-coords').textContent =
-                data.latitude && data.longitude ?
-                    `${data.latitude.toFixed(6)}°, ${data.longitude.toFixed(6)}°` : '-';
+                document.getElementById(data.mac + '-raw-coords').textContent =
+                    data.lat_raw && data.lon_raw ? `${data.lat_raw} / ${data.lon_raw}` : '-';
 
-            document.getElementById('speed').textContent =
-                data.speed !== null ? `${data.speed} knots` : '-';
+                document.getElementById(data.mac + '-dec-coords').textContent =
+                    data.latitude && data.longitude ?
+                        `${data.latitude.toFixed(6)}°, ${data.longitude.toFixed(6)}°` : '-';
 
-            document.getElementById('course').textContent =
-                data.course !== null ? `${data.course}°` : '-';
+                document.getElementById(data.mac + '-speed').textContent =
+                    data.speed !== null ? `${data.speed} knots` : '-';
 
-            document.getElementById('gps-time').textContent =
-                data.time_utc ? formatUtcTime(data.time_utc) : '-';
+                document.getElementById(data.mac + '-course').textContent =
+                    data.course !== null ? `${data.course}°` : '-';
 
-            document.getElementById('last-update').textContent =
-                data.last_update || '-';
+                document.getElementById(data.mac + '-gps-time').textContent =
+                    data.time_utc ? formatUtcTime(data.time_utc) : '-';
 
-            // Update map marker
-            if (data.latitude && data.longitude) {
-                var coords = ol.proj.fromLonLat([data.longitude, data.latitude]);
-                marker.getGeometry().setCoordinates(coords);
-                map.getView().setCenter(coords);
+                document.getElementById(data.mac + '-last-update').textContent =
+                    data.last_update || '-';
+
+                // Update map marker
+                if (data.latitude && data.longitude) {
+                    var coords = ol.proj.fromLonLat([data.longitude, data.latitude]);
+                    marker.getGeometry().setCoordinates(coords);
+                    map.getView().setCenter(coords);
+                }
             }
         });
 }

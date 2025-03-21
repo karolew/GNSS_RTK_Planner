@@ -1,6 +1,4 @@
 from ast import Pass
-# from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Table, create_engine, engine
-# from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from datetime import datetime
 import enum
 from config import sqla, mars, app
@@ -93,55 +91,8 @@ if __name__ == "__main__":
 
     trail1 = Trail(name="a", trail_points="1.2,3.3;1.2,3.4")
     trail2 = Trail(name="b", trail_points="1.2,3.3;1.2,3.4;1.2,3.5")
-    rover1 = Rover(mac="a8032a56ae8c", name="Rover1", status=1, last_active=datetime.today(), trails=[trail1])
+    rover1 = Rover(mac="a8032a56ae8d", name="Rover1", status=1, last_active=datetime.today(), trails=[trail1])
     rover2 = Rover(mac="21", name="Rover2", status=1, last_active=datetime.today(), trails=[trail2, trail1])
+    rover2 = Rover(mac="a8032a56ae8c", name="Rover3", status=1, last_active=datetime.today(), trails=[trail2, trail1])
     session.add_all([rover1, rover2, trail1, trail2])
     session.commit()
-
-    #
-    # def new_rover(rover_mac: str, rover_name: str) -> None:
-    #     is_rover = session.query(Rover).filter_by(name=rover_name).first()
-    #     if is_rover:
-    #         print(f"Rover name: {rover_name} exists.")
-    #         return
-    #     rover = Rover(mac=rover_mac, name=rover_name)
-    #     session.add_all([rover])
-    #     session.commit()
-    #
-    # def new_rover_with_existing_trails(rover_mac: str, rover_name: str, trail_id: int) -> None:
-    #     trail = session.query(Trail).filter_by(id=trail_id).first()
-    #     rover = Rover(mac=rover_mac, name=rover_name, trails=[trail])
-    #     session.add_all([rover])
-    #     session.commit()
-    #
-    # def existing_rover_existing_trials(rover_name: str, trail_name: str) -> None:
-    #     rover_id = session.query(Rover.id).filter_by(name=rover_name).first()
-    #     trail_id = session.query(Trail.id).filter_by(name=trail_name).first()
-    #     if not rover_id:
-    #         print(f"Cannot update. Rover {rover_name} does not exist.")
-    #         return
-    #     if not trail_id:
-    #         print(f"Cannot update. Trail ID {rover_id} does not exist.")
-    #         return
-    #
-    #     rover_trial = RoverTrail(rover_id = rover_id[0], trail_id = trail_id[0])
-    #     session.add_all([rover_trial])
-    #     session.commit()
-    #
-    # def get_rover_trials(rover_name: str) -> list:
-    #     rover = session.query(Rover).filter_by(name=rover_name).first()
-    #     trails = [trail.trail_points for trail in rover.trails]
-    #     print(trails)
-    #     return trails
-
-
-    # #new_rover_with_existing_trails("123", "Rover3", 1)
-    # new_rover("1", "Rover1")
-    # new_rover("2", "Rover2")
-    # new_rover("3", "Rover3")
-    # #existing_rover_existing_trials("Rover5", 1)
-    # get_rover_trials("Rover2")
-    # get_rover_trials("Rover1")
-    # get_rover_trials("Rover3")
-
-

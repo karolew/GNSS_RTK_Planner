@@ -181,6 +181,8 @@ definitions:
       - latitude
       - longitude
     properties:
+      mac:
+        type: string
       fix_status:
         type: string
       latitude:

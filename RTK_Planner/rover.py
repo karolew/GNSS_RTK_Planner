@@ -6,6 +6,7 @@ from datetime import datetime
 from config import sqla
 
 latest_gps_data = {
+    "mac": None,
     "fix_status": "Unknown",
     "latitude": None,
     "longitude": None,
@@ -52,6 +53,7 @@ def update_gps(gnssdata):
         latest_gps_data["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"""
         GPS Status Update:
+        Rover MAC: {gnssdata_dict["mac"]}
         Fix Status: {gnssdata_dict["fix_status"]}
         Time (UTC): {format_utc_time(gnssdata_dict["time_utc"])}
         Raw Coordinates: {gnssdata_dict["lat_raw"]} / {gnssdata_dict["lon_raw"]}
