@@ -96,7 +96,9 @@ def create_rover():
     new_rover = Rover(
         mac=data['mac'],
         name=data['name'],
-        status='Idle'  # Default status
+        status='Idle',                  # Default status
+        last_active=datetime.now(),     # TODO change to sth different
+        trails = []
     )
 
     # Associate trails if provided

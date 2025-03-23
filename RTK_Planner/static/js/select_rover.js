@@ -39,9 +39,3 @@ export function updateElements() {
         }
     });
 }
-
-
-// Call the function when the document is ready
-$(document).ready(function () {
-    updateElements();
-});
