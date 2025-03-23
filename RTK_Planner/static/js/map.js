@@ -61,7 +61,6 @@ export function updateStatus() {
         .then(response => response.json())
         .then(data => {
             if (data) {
-
                 // Update status panel
                 document.getElementById(data.mac + '-fix-status').textContent = data.fix_status;
                 document.getElementById(data.mac + '-fix-status').className =
@@ -72,13 +71,13 @@ export function updateStatus() {
 
                 document.getElementById(data.mac + '-dec-coords').textContent =
                     data.latitude && data.longitude ?
-                        `${data.latitude.toFixed(6)}°, ${data.longitude.toFixed(6)}°` : '-';
+                        `${data.latitude.toFixed(7)}, ${data.longitude.toFixed(7)}` : '-';
 
                 document.getElementById(data.mac + '-speed').textContent =
                     data.speed !== null ? `${data.speed} knots` : '-';
 
                 document.getElementById(data.mac + '-course').textContent =
-                    data.course !== null ? `${data.course}°` : '-';
+                    data.course !== null ? `${data.course}` : '-';
 
                 document.getElementById(data.mac + '-gps-time').textContent =
                     data.time_utc ? formatUtcTime(data.time_utc) : '-';
@@ -135,4 +134,4 @@ function getColorFromMac(mac) {
 
 
 // Update status given milliseconds
-setInterval(updateStatus, 2000);
+setInterval(updateStatus, 500);

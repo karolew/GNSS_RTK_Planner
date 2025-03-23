@@ -1,8 +1,19 @@
-<h5>Status of {{ rover.name }}</h5>
-<p>Fix Status: <span id="{{ rover.mac }}-fix-status">Unknown</span></p>
-<p>Raw Coordinates: <span id="{{ rover.mac }}-raw-coords">-</span></p>
-<p>Decimal Coordinates: <span id="{{ rover.mac }}-dec-coords">-</span></p>
-<p>Speed: <span id="{{ rover.mac }}-speed">-</span></p>
-<p>Course: <span id="{{ rover.mac }}-course">-</span></p>
-<p>GPS Time: <span id="{{ rover.mac }}-gps-time">-</span></p>
-<p>Last Update: <span id="{{ rover.mac }}-last-update">-</span></p>
+<table style="width:100%">
+    <tr>
+        <td>{{ rover.name }}</td>
+        <td>Fix Status: <span id="{{ rover.mac }}-fix-status">Unknown</span></td>
+    </tr>
+    <tr>
+        <td>Decimal Coordinates: <span id="{{ rover.mac }}-dec-coords">-</span></td>
+        <td>Raw Coordinates: <span id="{{ rover.mac }}-raw-coords">-</span></td>
+    </tr>
+    <tr>
+        <td>Speed: <span id="{{ rover.mac }}-speed">-</span></td>
+        <td>Course: <span id="{{ rover.mac }}-course">-</span></td>
+        <td>GPS Time: <span id="{{ rover.mac }}-gps-time">-</span></td>
+        <td>Last Update: <span id="{{ rover.mac }}-last-update">-</span></td>
+    </tr>
+    <tr>
+        <td><button>Edit</button></td>
+    </tr>
+</table>
