@@ -135,3 +135,7 @@ function getColorFromMac(mac) {
 
 // Update status given milliseconds
 setInterval(updateStatus, 500);
+
+map.on("click", function (e) {
+    console.log(e.coordinate);
+})
