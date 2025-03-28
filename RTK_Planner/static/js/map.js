@@ -1,21 +1,16 @@
-var map = new ol.Map({
-    target: 'map',
-    layers: [
-        new ol.layer.Tile({
-            source: new ol.source.OSM()
-        })
-    ],
-    view: new ol.View({
-        center: ol.proj.fromLonLat([0, 0]),
-        zoom: 2
-    })
+/*
+Define Map Layers
+*/
+
+const OSMLayer = new ol.layer.Tile({
+    source: new ol.source.OSM(),
 });
 
+const sourceDrawVector = new ol.source.Vector({ wrapX: false });
+const vectorDrawLayer = new ol.layer.Vector({
+    source: sourceDrawVector,
+});
 
-// Initialize a map to store features by MAC address
-const macFeatures = {};
-
-// Initialize vector source and layer for markers
 const vectorSource = new ol.source.Vector();
 const vectorLayer = new ol.layer.Vector({
     source: vectorSource,
@@ -49,7 +44,49 @@ const vectorLayer = new ol.layer.Vector({
     }
 });
 
-map.addLayer(vectorLayer);
+/*
+Define Map
+*/
+const map = new ol.Map({
+    target: 'map',
+    layers: [OSMLayer, vectorDrawLayer, vectorLayer],
+    view: new ol.View({
+        center: ol.proj.fromLonLat([0, 0]),
+        zoom: 2
+    })
+});
+
+/*
+Functionalities
+*/
+// Draw Methods
+const drawTypeSelect = document.getElementById('draw-type');
+
+let draw; // global so we can remove it later
+export function addInteraction() {
+    const value = drawTypeSelect.value;
+    if (value !== 'None') {
+        draw = new ol.interaction.Draw({
+            source: sourceDrawVector,
+            type: drawTypeSelect.value,
+        });
+        map.addInteraction(draw);
+    }
+}
+
+// Handle draw event
+drawTypeSelect.onchange = function () {
+    map.removeInteraction(draw);
+    addInteraction();
+};
+
+document.getElementById('undo').addEventListener('click', function () {
+    draw.removeLastPoint();
+});
+
+
+// Initialize a map to store features by MAC address
+const macFeatures = {};
 
 function formatUtcTime(timeStr) {
     if (!timeStr) return '-';
@@ -136,6 +173,7 @@ function getColorFromMac(mac) {
 // Update status given milliseconds
 setInterval(updateStatus, 500);
 
+// Get coordinates from map after click
 map.on("click", function (e) {
     console.log(e.coordinate);
 })

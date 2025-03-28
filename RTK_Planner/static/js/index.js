@@ -1,6 +1,7 @@
 import { DebugForm } from "./debug.js";
 import { updateElements } from "./select_rover.js";
 import { activateCreateForm } from "./rover.js"
+import { addInteraction } from "./map.js"
 
 function main() {
     if (document.querySelector(".debug-card")) {
@@ -8,11 +9,9 @@ function main() {
         debug.showResponse("");
     }
 
-    $(document).ready(function () {
-        updateElements();
-    });
-
+    updateElements();
     activateCreateForm();
+    addInteraction();
 }
 
 main();
