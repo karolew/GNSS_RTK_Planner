@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rover Trail Management</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.css" type="text/css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
@@ -23,18 +24,22 @@
     </div>
 
     <div class="control-panel">
+        {% include "__draw_panel.html" %}
+    </div>
+
+    <div class="control-panel">
         {% include "__control_panel.html" %}
     </div>
 
     <div class="status-panel">
         {% for rover in rovers %}
-            {% include "__rover_status_panel.html" %}
+        {% include "__rover_status_panel.html" %}
         {% endfor %}
     </div>
 
     <!--Debug information start-->
     {% if config['DEBUG'] %}
-        {% include "__debug.html" %}
+    {% include "__debug.html" %}
     {% endif %}
 
 </body>
