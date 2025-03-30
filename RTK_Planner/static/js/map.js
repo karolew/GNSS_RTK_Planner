@@ -84,14 +84,20 @@ document.getElementById('undo').addEventListener('click', function () {
     draw.removeLastPoint();
 });
 
-document.getElementById("trial-save-button").addEventListener("click", function () {
+document.getElementById("clear-all-button").addEventListener("click", function () {
     sourceDrawVector.getFeatures().forEach(function (feature) {
-        // TODO save these things as Trial.
-        console.log(feature.getGeometry().getCoordinates());
-        // Remove the geometry features.
         sourceDrawVector.removeFeature(feature);
     });
 });
+
+document.getElementById("trial-save-button").addEventListener("click", function () {
+    console.log(document.getElementById("trial-name").value);
+    sourceDrawVector.getFeatures().forEach(function (feature) {
+        // TODO save these things as Trial.
+        console.log(feature.getGeometry().getCoordinates());
+    });
+});
+
 
 /*
 Handle GNSS Markers

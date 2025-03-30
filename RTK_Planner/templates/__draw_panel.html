@@ -1,15 +1,19 @@
 <div class="row">
     <div class="col-auto">
         <span>
-            <label for="type">Drawing Method</label>
+            <label for="draw-type">Drawing Method</label>
             <select id="draw-type">
                 <option value="Point">Point</option>
                 <option value="LineString">LineString</option>
-                <option value="Polygon">Polygon</option>
-                <option value="Circle">Circle</option>
-                <option value="None">None</option>
+                <option value="None" selected="selected">None</option>
             </select>
             <input type="button" value="Undo" id="undo">
+            <input type="button" value="Clear" id="clear-all-button">
+        </span>
+
+        <span>
+            <label for="trial-name">Trial Name</label>
+            <input name="trial-name" type="text" value="" id="trial-name" />
             <input type="button" value="Save Trial" id="trial-save-button">
         </span>
     </div>
