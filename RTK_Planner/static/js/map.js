@@ -75,8 +75,7 @@ export function addInteraction() {
 }
 
 // Handle draw event
-drawTypeSelect.onchange = function () {
-    # TODO zobaczyæ manipulacje sourceDrawVector
+drawTypeSelect.onchange = function (e) {
     map.removeInteraction(draw);
     addInteraction();
 };
@@ -85,7 +84,18 @@ document.getElementById('undo').addEventListener('click', function () {
     draw.removeLastPoint();
 });
 
+document.getElementById("trial-save-button").addEventListener("click", function () {
+    sourceDrawVector.getFeatures().forEach(function (feature) {
+        // TODO save these things as Trial.
+        console.log(feature.getGeometry().getCoordinates());
+        // Remove the geometry features.
+        sourceDrawVector.removeFeature(feature);
+    });
+});
 
+/*
+Handle GNSS Markers
+*/
 // Initialize a map to store features by MAC address
 const macFeatures = {};
 
@@ -174,7 +184,8 @@ function getColorFromMac(mac) {
 // Update status given milliseconds
 setInterval(updateStatus, 500);
 
-// Get coordinates from map after click
-map.on("click", function (e) {
-    console.log(e.coordinate);
-})
+//// Get coordinates from map after click
+//map.on("click", function (e) {
+//    console.log(e.coordinate);
+//})
+
