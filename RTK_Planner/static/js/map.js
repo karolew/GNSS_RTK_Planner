@@ -76,6 +76,7 @@ export function addInteraction() {
 
 // Handle draw event
 drawTypeSelect.onchange = function () {
+    # TODO zobaczyæ manipulacje sourceDrawVector
     map.removeInteraction(draw);
     addInteraction();
 };
@@ -97,7 +98,7 @@ export function updateStatus() {
     fetch('/rover/get_coords')
         .then(response => response.json())
         .then(data => {
-            if (data) {
+            if (data.latitude) {
                 // Update status panel
                 document.getElementById(data.mac + '-fix-status').textContent = data.fix_status;
                 document.getElementById(data.mac + '-fix-status').className =
