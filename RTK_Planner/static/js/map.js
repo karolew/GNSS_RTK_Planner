@@ -75,6 +75,10 @@ export function addInteraction() {
 }
 
 // Handle draw event
+const trailName = document.getElementById("trial-name");
+const trailButton = document.getElementById("trial-save-button");
+const trailConsole = document.getElementById("trail-console");
+
 drawTypeSelect.onchange = function (e) {
     map.removeInteraction(draw);
     addInteraction();
@@ -88,10 +92,9 @@ document.getElementById("clear-all-button").addEventListener("click", function (
     sourceDrawVector.getFeatures().forEach(function (feature) {
         sourceDrawVector.removeFeature(feature);
     });
+    trailConsole.innerHTML = "";
+    trailName.value = "";
 });
-
-const trailName = document.getElementById("trial-name");
-const trailButton = document.getElementById("trial-save-button");
 
 trailName.addEventListener("input", function () {
     if (trailName.value != "") {
@@ -105,28 +108,38 @@ trailButton.addEventListener("click", function () {
     let points = [];
     sourceDrawVector.getFeatures().forEach(function (feature) {
         points.push(feature.getGeometry().getCoordinates());
+        sourceDrawVector.removeFeature(feature);
     });
+    if (points.length > 0) {
+        fetch('/trail', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                trail_points: points,
+                name: trailName.value
+            })
+        })
+            .then(response => {
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data);
+                trailConsole.style.color = '#00AA00';
+                trailConsole.innerHTML = "Trail " + data.name + " created.\nPoints: " + data.trail_points
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                trailConsole.style.color = '#FF0000';
+            });
+        trailName.value = "";
+        trailButton.disabled = true;
+    } else {
+        trailConsole.style.color = '#FF0000';
+        trailConsole.innerHTML = "Add at least one point or path to the trail."
+    }
 
-    fetch('/trail', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            trail_points: points,
-            name: trailName.value
-        })
-    })
-        .then(response => {
-            return response.json();
-        })
-        .then(data => {
-            console.log('Success:', data);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    trailName.value = "";
 });
 
 /*
