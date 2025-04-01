@@ -125,6 +125,20 @@ paths:
             type: array
             items:
               $ref: '#/definitions/Trail'
+    post:
+      description: "Create Trail."
+      operationId: "trail.create_trail"
+      parameters:
+        - name: trail
+          in: body
+          description: "Trail data."
+          schema:
+            $ref: "#/definitions/Trail"
+      responses:
+        200:
+          description: "Successfully created Trail."
+        400:
+          $ref: "#/responses/400Error"
 
   /trail/{rover_id}:
     get:
@@ -164,7 +178,6 @@ definitions:
   Trail:
     type: object
     required:
-      - id
       - name
     properties:
       id:
@@ -172,7 +185,7 @@ definitions:
       name:
         type: string
       trail_points:
-        type: string
+        type: array
 
   GNSSdata:
     type: string

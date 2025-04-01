@@ -90,14 +90,44 @@ document.getElementById("clear-all-button").addEventListener("click", function (
     });
 });
 
-document.getElementById("trial-save-button").addEventListener("click", function () {
-    console.log(document.getElementById("trial-name").value);
-    sourceDrawVector.getFeatures().forEach(function (feature) {
-        // TODO save these things as Trial.
-        console.log(feature.getGeometry().getCoordinates());
-    });
+const trailName = document.getElementById("trial-name");
+const trailButton = document.getElementById("trial-save-button");
+
+trailName.addEventListener("input", function () {
+    if (trailName.value != "") {
+        trailButton.disabled = false;
+    } else {
+        trailButton.disabled = true;
+    }
 });
 
+trailButton.addEventListener("click", function () {
+    let points = [];
+    sourceDrawVector.getFeatures().forEach(function (feature) {
+        points.push(feature.getGeometry().getCoordinates());
+    });
+
+    fetch('/trail', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            trail_points: points,
+            name: trailName.value
+        })
+    })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            console.log('Success:', data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    trailName.value = "";
+});
 
 /*
 Handle GNSS Markers
