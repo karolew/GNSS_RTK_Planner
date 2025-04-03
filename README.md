@@ -40,7 +40,7 @@ ESP Flash
 
 ### Schematic
 
-![alt text](rtk.png)
+![alt text](rtk_schematic.png)
 
 ## Web Service
 
