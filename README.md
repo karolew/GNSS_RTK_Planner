@@ -14,8 +14,8 @@ to server.
 
 ### Configuration File
 
-The `config.json` is a mandatory input file with configurations.
-Use the `temp_caonfig.json` template, rename it and fill it with your data.
+The `config.json` is a mandatory input file with configuration.
+Use the `temp_caonfig.json` template, rename it and fill with your data.
 
 NTRIP service depends on your location/country. In my case it was Polish
 NTRIP Correction Data Service: https://www.asgeupos.pl/language/en/
@@ -40,7 +40,7 @@ ESP Flash
 
 ### Schematic
 
-![alt text](rtk_schematic.png)
+![alt text](schematic.png)
 
 ## Web Service
 
