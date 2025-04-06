@@ -19,7 +19,7 @@ const vectorLayer = new ol.layer.Vector({
         const mac = feature.get('mac');
         return new ol.style.Style({
             image: new ol.style.Circle({
-                radius: 6,
+                radius: 7,
                 fill: new ol.style.Fill({
                     // Generate a consistent color based on MAC address
                     color: getColorFromMac(mac)
@@ -31,6 +31,7 @@ const vectorLayer = new ol.layer.Vector({
             }),
             text: new ol.style.Text({
                 text: mac,
+                font: 15 + 'px sans-serif',
                 offsetY: -15,
                 fill: new ol.style.Fill({
                     color: '#000'
@@ -63,7 +64,7 @@ Functionalities
 const drawTypeSelect = document.getElementById('draw-type');
 
 let draw; // global so we can remove it later
-export function addInteraction() {
+function addInteraction() {
     const value = drawTypeSelect.value;
     if (value !== 'None') {
         draw = new ol.interaction.Draw({
@@ -76,8 +77,47 @@ export function addInteraction() {
 
 // Handle draw event
 const trailName = document.getElementById("trial-name");
-const trailButton = document.getElementById("trial-save-button");
+const trailSaveButton = document.getElementById("trial-save-button");
+const trailDeleteButton = document.getElementById("trial-delete-button");
 const trailConsole = document.getElementById("trail-console");
+const trailAllDropdown = document.getElementById("all-trails-dropdown");
+
+function loadTrailsForDropdown() {
+    fetch("/api/trails")
+        .then(response => response.json())
+        .then(data => {
+            // Clear existing options except the first one
+            while (trailAllDropdown.options.length > 1) {
+                trailAllDropdown.remove(1);
+            }
+
+            if (data.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No trails associated';
+                trailAllDropdown.innerHTML = '';
+                trailAllDropdown.appendChild(option);
+                return;
+            }
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select a trail';
+            trailAllDropdown.innerHTML = '';
+            trailAllDropdown.appendChild(defaultOption);
+
+            data.forEach(trail => {
+                const option = document.createElement('option');
+                option.value = trail.id;
+                option.textContent = trail.name;
+                trailAllDropdown.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading associated trails for dropdown:', error);
+            trailAllDropdown.innerHTML = '<option value="">Error loading trails</option>';
+        });
+}
 
 drawTypeSelect.onchange = function (e) {
     map.removeInteraction(draw);
@@ -98,20 +138,20 @@ document.getElementById("clear-all-button").addEventListener("click", function (
 
 trailName.addEventListener("input", function () {
     if (trailName.value != "") {
-        trailButton.disabled = false;
+        trailSaveButton.disabled = false;
     } else {
-        trailButton.disabled = true;
+        trailSaveButton.disabled = true;
     }
 });
 
-trailButton.addEventListener("click", function () {
+trailSaveButton.addEventListener("click", function () {
     let points = [];
     sourceDrawVector.getFeatures().forEach(function (feature) {
         points.push(feature.getGeometry().getCoordinates());
         sourceDrawVector.removeFeature(feature);
     });
     if (points.length > 0) {
-        fetch('/trail', {
+        fetch('/api/trails', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -126,6 +166,7 @@ trailButton.addEventListener("click", function () {
             })
             .then(data => {
                 console.log('Success:', data);
+                loadTrailsForDropdown();
                 trailConsole.style.color = '#00AA00';
                 trailConsole.innerHTML = "Trail " + data.name + " created.\nPoints: " + data.trail_points
             })
@@ -134,13 +175,36 @@ trailButton.addEventListener("click", function () {
                 trailConsole.style.color = '#FF0000';
             });
         trailName.value = "";
-        trailButton.disabled = true;
+        trailSaveButton.disabled = true;
     } else {
         trailConsole.style.color = '#FF0000';
         trailConsole.innerHTML = "Add at least one point or path to the trail."
     }
-
 });
+
+trailDeleteButton.addEventListener("click", function () {
+    const selectedTrailName = trailAllDropdown.options[trailAllDropdown.selectedIndex].text;
+    if (selectedTrailName != trailAllDropdown.options[0].text) {
+        fetch(`/api/trails/${selectedTrailName}`, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to delete trail');
+                }
+                loadTrailsForDropdown();
+                trailConsole.style.color = '#e88740';
+                trailConsole.innerHTML = "Trail " + selectedTrailName + " has been deleted."
+                return response.json();
+            })
+            .catch(error => {
+                console.error('Error deleting trail:', error);
+                alert('Failed to delete trail. Please try again.');
+            });
+    }
+});
+
+loadTrailsForDropdown();
 
 /*
 Handle GNSS Markers
@@ -153,43 +217,41 @@ function formatUtcTime(timeStr) {
     return `${timeStr.slice(0, 2)}:${timeStr.slice(2, 4)}:${timeStr.slice(4, 6)} UTC`;
 }
 
-export function updateStatus() {
-    fetch('/rover/get_coords')
-        .then(response => response.json())
-        .then(data => {
-            if (data.latitude) {
-                // Update status panel
-                document.getElementById(data.mac + '-fix-status').textContent = data.fix_status;
-                document.getElementById(data.mac + '-fix-status').className =
-                    data.fix_status === 'Valid' ? 'status-valid' : 'status-invalid';
+// Handle incoming data
+new EventSource('/rover/get_coords').onmessage = function (event) {
+    let data = JSON.parse(event.data);
+    if (data) {
+        // Update rover page
+        document.getElementById(data.mac + '-fix-status').textContent = data.fix_status;
+        document.getElementById(data.mac + '-fix-status').className =
+            data.fix_status != 'Unknown' ? 'status-valid' : 'status-invalid';
 
-                document.getElementById(data.mac + '-raw-coords').textContent =
-                    data.lat_raw && data.lon_raw ? `${data.lat_raw} / ${data.lon_raw}` : '-';
 
-                document.getElementById(data.mac + '-dec-coords').textContent =
-                    data.latitude && data.longitude ?
-                        `${data.latitude.toFixed(7)}, ${data.longitude.toFixed(7)}` : '-';
+        document.getElementById(data.mac + '-raw-coords').textContent =
+            data.lat_raw && data.lon_raw ? `${data.lat_raw} / ${data.lon_raw}` : '-';
 
-                document.getElementById(data.mac + '-speed').textContent =
-                    data.speed !== null ? `${data.speed} knots` : '-';
+        document.getElementById(data.mac + '-dec-coords').textContent =
+            data.latitude && data.longitude ?
+                `${data.latitude.toFixed(7)}, ${data.longitude.toFixed(7)}` : '-';
 
-                document.getElementById(data.mac + '-course').textContent =
-                    data.course !== null ? `${data.course}` : '-';
+        document.getElementById(data.mac + '-speed').textContent =
+            data.speed !== null ? `${data.speed} knots` : '-';
 
-                document.getElementById(data.mac + '-gps-time').textContent =
-                    data.time_utc ? formatUtcTime(data.time_utc) : '-';
+        document.getElementById(data.mac + '-course').textContent =
+            data.course !== null ? `${data.course}` : '-';
 
-                document.getElementById(data.mac + '-last-update').textContent =
-                    data.last_update || '-';
+        document.getElementById(data.mac + '-gps-time').textContent =
+            data.time_utc ? formatUtcTime(data.time_utc) : '-';
 
-                // Update map marker
-                if (data.latitude && data.longitude && data.mac) {
-                    updateMarker(data.mac, data.longitude, data.latitude);
-                }
-            }
-        });
-}
+        document.getElementById(data.mac + '-last-update').textContent =
+            data.last_update || '-';
 
+        // Update map marker
+        if (data.latitude && data.longitude && data.mac) {
+            updateMarker(data.mac, data.longitude, data.latitude);
+        }
+    }
+};
 
 function updateMarker(mac, lon, lat) {
     // Convert coordinates to the map's projection (assuming EPSG:3857)
@@ -228,13 +290,3 @@ function getColorFromMac(mac) {
 
     return `rgb(${r}, ${g}, ${b})`;
 }
-
-
-// Update status given milliseconds
-setInterval(updateStatus, 500);
-
-//// Get coordinates from map after click
-//map.on("click", function (e) {
-//    console.log(e.coordinate);
-//})
-

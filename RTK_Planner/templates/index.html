@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>GPS Tracker</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rover Trail Management</title>
+    <title>Rover Management</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -12,29 +12,26 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-    <script src="{{ url_for('static', filename='js/index.js') }}" type="module"></script>
-    <script src="{{ url_for('static', filename='js/select_rover.js') }}" type="module"></script>
-    <script src="{{ url_for('static', filename='js/map.js') }}" type="module"></script>
-
 </head>
+
 <body>
-    <div id="map" class="map">
-        <!--Map and tracking points-->
-    </div>
+    <h1>GNSS RTK Trail Planner</h1>
+
+    <!--Map and tracking points-->
+    <div id="map" class="map"></div>
 
     <div class="control-panel">
         {% include "__draw_panel.html" %}
     </div>
 
+    <!-- Add Rover Form -->
     <div class="control-panel">
-        {% include "__control_panel.html" %}
+        {% include "__create_rover_panel.html" %}
     </div>
 
-    <div class="status-panel">
-        {% for rover in rovers %}
-        {% include "__rover_status_panel.html" %}
-        {% endfor %}
+    <!-- Rovers Container -->
+    <div class="rovers-container">
+        <div id="roversListContainer"></div>
     </div>
 
     <!--Debug information start-->
@@ -42,5 +39,8 @@
     {% include "__debug.html" %}
     {% endif %}
 
+    <script src="{{ url_for('static', filename='js/rover.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/debug.js') }}" type="module"></script>
 </body>
 </html>

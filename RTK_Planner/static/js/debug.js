@@ -1,6 +1,14 @@
-import { getData } from "./request.js";
-
-export class DebugForm {
+function getData(endpoint, callback) {
+    const request = new XMLHttpRequest();
+    request.onreadystatechange = () => {
+        if (request.readyState === 4) {
+            callback(request.response);
+        }
+    };
+    request.open("GET", endpoint);
+    request.send();
+}
+class DebugForm {
     constructor() {
         this.debug_card = document.querySelector(".debug-card");
         this.form = this.debug_card.querySelector(".debug-form");
@@ -31,4 +39,9 @@ export class DebugForm {
         let code = debugCard.querySelector("code");
         code.innerText = data;
     }
+}
+
+if (document.querySelector(".debug-card")) {
+    const debug = new DebugForm();
+    debug.showResponse("");
 }

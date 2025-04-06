@@ -1,4 +1,5 @@
 <div class="row">
+    <h4>Manage Trails</h4>
     <div class="col-auto">
         <span>
             <label for="draw-type">Drawing Method</label>
@@ -7,15 +8,22 @@
                 <option value="LineString">LineString</option>
                 <option value="None" selected="selected">None</option>
             </select>
-            <input type="button" value="Undo" id="undo">
-            <input type="button" value="Clear" id="clear-all-button">
+            <button type="button" id="undo">undo</button>
+            <button type="button" id="clear-all-button">Clear</button>
         </span>
 
         <span>
             <label for="trial-name">Trial Name</label>
-            <input name="trial-name" type="text" value="" id="trial-name" />
-            <button type="button" id="trial-save-button" disabled>Save Trial</button>
+            <input name="trial-name" type="text" value="" id="trial-name" placeholder="Enter trail name" />
+            <button type="button" id="trial-save-button" disabled>Create Trial</button>
         </span>
-       <div id="trail-console"></div>
+
+        <select id="all-trails-dropdown">
+            <option value="">Select a trail</option>
+        </select>
+        <button class="button-secondary" id="trial-delete-button">Delete Trail</button>
+
+
+        <div id="trail-console"></div>
     </div>
 </div>
