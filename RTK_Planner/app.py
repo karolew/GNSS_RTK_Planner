@@ -298,12 +298,29 @@ def register():
         return abort(406, "Rover not registered.") 
 
 
-@app.route("/trial/upload/<int:trail_id>/to/<int:rover_id>/", methods=["POST"])
-def upload_trial_to_rover(trail_id, rover_id):
-    # pobieramy zaznaczony trial z rover_id
-    # wysyamy go do rover_id
-    pass
+#  HTTP polling to update rover with trails. 
+#  Simplest approach for demo purpose. Consider sockets or mqtt.
+trail_points_for_rover = {"mac": "", "trail_points": ""}
 
+@app.route("/trail/upload/<int:rover_id>/<int:trail_id>", methods=["POST"])
+def upload_trial_to_rover(rover_id, trail_id):
+    global trail_points_for_rover
+    rover_mac = query_db('SELECT mac FROM rover WHERE id = ?', [rover_id], one=True)
+    trail_points = query_db('SELECT trail_points FROM trail WHERE id = ?', [trail_id], one=True)
+    trail_points_dict = dict(trail_points)
+    trail_points_for_rover = dict(rover_mac)
+    trail_points_for_rover.update(trail_points_dict)
+    if trail_points_for_rover["mac"] and trail_points_dict["trail_points"]:
+        return trail_points_for_rover, 200
+    else:
+        return abort(400, "No trials to send.") 
+
+@app.route('/trail/upload', methods=['GET'])
+def get_data():
+    global trail_points_for_rover
+    tmp = trail_points_for_rover
+    trail_points_for_rover = {"mac": "", "trail_points": ""}
+    return jsonify(tmp)
 
 if __name__ == '__main__':
 # Create schema.sql file
