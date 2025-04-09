@@ -101,6 +101,9 @@ function renderRoverCard(rover, container, prepend = false) {
                                             <select id="trail-dropdown-${rover.id}" onchange="displaySelectedTrail(${rover.id})">
                                                 <option value="">Select a trail</option>
                                             </select>
+                                            
+                                            <button class="button-secondary" onclick="sendTrailToRover(${rover.id})">Send Trail</button>
+
                                             <p id="selected-trail-${rover.id}"></p>
                                         </div>
 
@@ -448,5 +451,27 @@ function deleteRover(roverId) {
         .catch(error => {
             console.error('Error deleting rover:', error);
             alert('Failed to delete rover. Please try again.');
+        });
+}
+
+// Send trail to rover
+function sendTrailToRover(roverId) {
+    const trailListContainer = document.getElementById(`trail-dropdown-${roverId}`);
+    const trailId = trailListContainer.value;
+
+    if (!trailId) {
+        alert('Please select a trail to send');
+        return;
+    }
+
+    fetch(`/trail/upload/${roverId}/${trailId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ trail_id: trailId })
+    })
+        .then(() => {
+            console.log(roverId, trailId);
         });
 }
