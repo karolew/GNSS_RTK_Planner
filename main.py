@@ -143,6 +143,7 @@ class WLAN:
                 if time_attempt + timeout_s < time.time():
                     print(f"Unable to connet WiFi network after {timeout_s} [s]. Retry.")
             print("WiFi connected. Network config:", self.sta_if.ifconfig())
+        time.sleep(1)
 
     def check(self):
         if not self.sta_if.isconnected():
@@ -153,6 +154,77 @@ class WLAN:
             mac_raw = self.sta_if.config("mac")
             mymac = ubin.hexlify(mac_raw).decode()
             return mymac
+
+
+class RTKPlanner:
+    # Data structure to send to RTK Planner.
+    gps_data = {
+        "mac": None,
+        "fix_status": "Unknowsn",
+        "latitude": None,
+        "longitude": None,
+        "lat_raw": None,
+        "lon_raw": None,
+        "speed": None,
+        "course": None,
+        "time_utc": None,
+        "last_update": None
+    }
+
+    def __init__(self, url, mac):
+        self.url = url
+        self.mac = mac
+
+    def register(self):
+        while True:
+            try:
+                response = urequests.post(self.url + "/rover/register",
+                                          headers={"Content-Type": "application/json"},
+                                          json=json.dumps({"mac": self.mac}),
+                                          timeout=1)
+                response_code = response.status_code
+                response.close()
+                if response_code == 200:
+                    print("Rover is registered.")
+                    break
+                else:
+                    print("Rover is NOT registered. Wait for confirmation.")
+            except Exception as e:
+                print(f"Failed to send mac: {e}")
+            time.sleep(2)
+
+    def get_trails(self):
+        try:
+            # Make HTTP GET request to Flask server
+            response = urequests.get(self.url + "/trail/upload")
+            if response.status_code == 200:
+                data = response.json()
+                mac = data.get('mac')
+                trail_points = data.get('trail_points')
+
+                if mac == self.mac:
+                    print(f"Received new trails: {trail_points}")
+
+            response.close()
+        except Exception as e:
+            print('Error:', e)
+
+    def send_gnss_update(self, nmea_data):
+        self.gps_data["latitude"] = float(nmea_data.lat)
+        self.gps_data["longitude"] = float(nmea_data.lon)
+        self.gps_data["fix_status"] = nmea_data.quality
+        self.gps_data["speed"] = nmea_data.speed
+        self.gps_data["course"] = nmea_data.course
+        self.gps_data["time_utc"] = nmea_data.time
+        self.gps_data["mac"] = self.mac
+        try:
+            response = urequests.post(self.url + "/rover/update_gps",
+                                      headers={"Content-Type": "application/json"},
+                                      json=json.dumps(self.gps_data),
+                                      timeout=1)
+            response.close()
+        except Exception as e:
+            print(f"Failed to send data: {e}")
 
 
 def main():
@@ -169,7 +241,7 @@ def main():
     gps_uart = UARTReceiver(uart_id=2)
 
     # NMEA decoder.
-    mn = MicroNMEA(units=1)
+    micro_nmea = MicroNMEA(units=1)
 
     # NTRIP server.
     ntrip_client = NTRIPClient(config["ntrip"]["host"],
@@ -180,41 +252,14 @@ def main():
     ntrip_client.connect()
 
     # RTK Planner.
-    rtkp_url = config["server"]["url"]
+    rtk_planner = RTKPlanner(config["server"]["url"], wlan.get_mac())
 
-    # Data structure to send to RTK Planner.
-    gps_data = {
-        "mac": None,
-        "fix_status": "Unknowsn",
-        "latitude": None,
-        "longitude": None,
-        "lat_raw": None,
-        "lon_raw": None,
-        "speed": None,
-        "course": None,
-        "time_utc": None,
-        "last_update": None
-    }
+    # Rover must be registered in RTK planner first.
+    rtk_planner.register()
 
-    mac = wlan.get_mac()
-    while True:
-        try:
-            response = urequests.post(rtkp_url + "/rover/register",
-                                      headers={"Content-Type": "application/json"},
-                                      json=json.dumps({"mac": mac}),
-                                      timeout=1)
-            response_code = response.status_code
-            response.close()
-            if response_code == 200:
-                print("Rover is registered.")
-                break
-            else:
-                print("Rover is NOT registered. Wait for confirmation.")
-        except Exception as e:
-            print(f"Failed to send mac: {e}")
-        time.sleep(2)
-
-    time_start = time.time()
+    # Main loop.
+    time_start = time.time()        # interval for gnss update
+    check_updates_s = time.time()   # interval for trail pull
     while True:
         try:
             # Check WLAN status.
@@ -222,6 +267,7 @@ def main():
 
             # Receive NTRIP data from configured service.
             ntrip_data = ntrip_client.read_data()
+
             # Resend NTRIP data to GNSS rover.
             gps_uart.send_data(ntrip_data)
 
@@ -230,26 +276,17 @@ def main():
 
             if sentence:
                 # Decode NMEA data.
-                mn.parse(sentence)
+                micro_nmea.parse(sentence)
 
                 # Send data to RTK Planner server.
                 if time_start + 1 < time.time():
-                    gps_data["latitude"] = float(mn.lat)
-                    gps_data["longitude"] = float(mn.lon)
-                    gps_data["fix_status"] = mn.quality
-                    gps_data["speed"] = mn.speed
-                    gps_data["course"] = mn.course
-                    gps_data["time_utc"] = mn.time
-                    gps_data["mac"] = mac
-                    try:
-                        response = urequests.post(rtkp_url + "/rover/update_gps",
-                                                  headers={"Content-Type": "application/json"},
-                                                  json=json.dumps(gps_data),
-                                                  timeout=1)
-                        response.close()
-                    except Exception as e:
-                        print(f"Failed to send data: {e}")
+                    rtk_planner.send_gnss_update(micro_nmea)
                     time_start = time.time()
+            
+            # HTTP pull trails every 5 seconds.
+            if time.time() - check_updates_s > 5:
+                rtk_planner.get_trails()
+                check_updates_s = time.time()
 
         except Exception as e:
             print(f"Main loop error: {e}")
