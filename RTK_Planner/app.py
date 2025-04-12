@@ -1,12 +1,13 @@
-from flask import Flask, request, jsonify, render_template, g, abort, Response
-import sqlite3
 import datetime
-import os
 import json
+import os
 import queue
+import sqlite3
 
-DATABASE = 'rovers.db'
-DATABASE_SCHEMA = 'schema.sql'
+from flask import Flask, Response, abort, g, jsonify, render_template, request
+
+DATABASE = "rovers.db"
+DATABASE_SCHEMA = "schema.sql"
 
 # Queue to store data from connected rovers.
 rover_data_queue = queue.Queue()
@@ -16,7 +17,7 @@ app = Flask(__name__)
 
 # Database helper functions
 def get_db():
-    if 'db' not in g:
+    if "db" not in g:
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row    # DB cursor returns dict instead of tuple.
     return g.db
@@ -32,7 +33,7 @@ def close_connection(exception):
 def init_db():
     with app.app_context():
         db = get_db()
-        with app.open_resource(DATABASE_SCHEMA, mode='r') as f:
+        with app.open_resource(DATABASE_SCHEMA, mode="r") as f:
             db.cursor().executescript(f.read())
         db.commit()
 
@@ -51,185 +52,185 @@ def modify_db(query, args=()):
 
 
 # Routes
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
 
 # API routes
-@app.route('/api/rovers', methods=['GET'])
+@app.route("/api/rovers", methods=["GET"])
 def get_rovers():
-    rovers = query_db('SELECT * FROM rover ORDER BY id DESC')
+    rovers = query_db("SELECT * FROM rover ORDER BY id DESC")
     return jsonify([dict(rover) for rover in rovers])
 
 
-@app.route('/api/rovers', methods=['POST'])
+@app.route("/api/rovers", methods=["POST"])
 def create_rover():
     data = request.json
-    name = data.get('name')
-    mac = data.get('mac')
-    status = data.get('status', 'inactive')
-    last_active = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    name = data.get("name")
+    mac = data.get("mac")
+    status = data.get("status", "inactive")
+    last_active = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     if not name or not mac:
-        return jsonify({'error': 'Name and MAC address are required'}), 400
+        return jsonify({"error": "Name and MAC address are required"}), 400
     
     try:
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute(
-            'INSERT INTO rover (mac, name, status, last_active) VALUES (?, ?, ?, ?)',
+            "INSERT INTO rover (mac, name, status, last_active) VALUES (?, ?, ?, ?)",
             (mac, name, status, last_active)
         )
         rover_id = cursor.lastrowid
         conn.commit()
         
         # Get the newly created rover
-        rover = query_db('SELECT * FROM rover WHERE id = ?', [rover_id], one=True)
+        rover = query_db("SELECT * FROM rover WHERE id = ?", [rover_id], one=True)
         return jsonify(dict(rover))
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/rovers/<int:rover_id>', methods=['GET'])
+@app.route("/api/rovers/<int:rover_id>", methods=["GET"])
 def get_rover(rover_id):
-    rover = query_db('SELECT * FROM rover WHERE id = ?', [rover_id], one=True)
+    rover = query_db("SELECT * FROM rover WHERE id = ?", [rover_id], one=True)
     if rover is None:
-        return jsonify({'error': 'Rover not found'}), 404
+        return jsonify({"error": "Rover not found"}), 404
     return jsonify(dict(rover))
 
 
-@app.route('/api/rovers/<int:rover_id>', methods=['PUT'])
+@app.route("/api/rovers/<int:rover_id>", methods=["PUT"])
 def update_rover(rover_id):
     data = request.json
-    name = data.get('name')
-    mac = data.get('mac')
+    name = data.get("name")
+    mac = data.get("mac")
     
     if not name or not mac:
-        return jsonify({'error': 'Name and MAC address are required'}), 400
+        return jsonify({"error": "Name and MAC address are required"}), 400
     
     try:
         modify_db(
-            'UPDATE rover SET name = ?, mac = ? WHERE id = ?',
+            "UPDATE rover SET name = ?, mac = ? WHERE id = ?",
             (name, mac, rover_id)
         )
         
         # Get the updated rover
-        rover = query_db('SELECT * FROM rover WHERE id = ?', [rover_id], one=True)
+        rover = query_db("SELECT * FROM rover WHERE id = ?", [rover_id], one=True)
         if rover is None:
-            return jsonify({'error': 'Rover not found'}), 404
+            return jsonify({"error": "Rover not found"}), 404
         return jsonify(dict(rover))
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/rovers/<int:rover_id>', methods=['DELETE'])
+@app.route("/api/rovers/<int:rover_id>", methods=["DELETE"])
 def delete_rover(rover_id):
     try:
         # First delete associations
-        modify_db('DELETE FROM rover_trail WHERE rover_id = ?', [rover_id])
+        modify_db("DELETE FROM rover_trail WHERE rover_id = ?", [rover_id])
         # Then delete the rover
-        modify_db('DELETE FROM rover WHERE id = ?', [rover_id])
-        return jsonify({'success': True})
+        modify_db("DELETE FROM rover WHERE id = ?", [rover_id])
+        return jsonify({"success": True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/trails', methods=['GET'])
+@app.route("/api/trails", methods=["GET"])
 def get_trails():
-    trails = query_db('SELECT * FROM trail ORDER BY name')
+    trails = query_db("SELECT * FROM trail ORDER BY name")
     return jsonify([dict(trail) for trail in trails])
 
 
-@app.route('/api/trails', methods=['POST'])
+@app.route("/api/trails", methods=["POST"])
 def create_trail():
     data = request.json
-    name = data.get('name')
-    trail_points = str(data.get('trail_points'))
+    name = data.get("name")
+    trail_points = str(data.get("trail_points"))
     
     if not name or not trail_points:
-        return jsonify({'error': 'Name and trail points are required'}), 400
+        return jsonify({"error": "Name and trail points are required"}), 400
     
     try:
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute(
-            'INSERT INTO trail (name, trail_points) VALUES (?, ?)',
+            "INSERT INTO trail (name, trail_points) VALUES (?, ?)",
             (name, trail_points)
         )
         trail_id = cursor.lastrowid
         conn.commit()
         
         # Get the newly created rover
-        trail = query_db('SELECT * FROM trail WHERE id = ?', [trail_id], one=True)
+        trail = query_db("SELECT * FROM trail WHERE id = ?", [trail_id], one=True)
         return jsonify(dict(trail))
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/trails/<string:trail_name>', methods=['DELETE'])
+@app.route("/api/trails/<string:trail_name>", methods=["DELETE"])
 def delete_trail(trail_name):
     try:
-        trail_row = query_db('SELECT id FROM trail WHERE name = ?', [trail_name], one=True)
+        trail_row = query_db("SELECT id FROM trail WHERE name = ?", [trail_name], one=True)
         trail_id = dict(trail_row).get("id")
         # First delete associations
-        modify_db('DELETE FROM rover_trail WHERE trail_id = ?', [trail_id])
+        modify_db("DELETE FROM rover_trail WHERE trail_id = ?", [trail_id])
         # Then delete the trail
-        modify_db('DELETE FROM trail WHERE name = ?', [trail_name])
-        return jsonify({'success': True})
+        modify_db("DELETE FROM trail WHERE name = ?", [trail_name])
+        return jsonify({"success": True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/rovers/<int:rover_id>/trails', methods=['GET'])
+@app.route("/api/rovers/<int:rover_id>/trails", methods=["GET"])
 def get_rover_trails(rover_id):
-    trails = query_db('''
+    trails = query_db("""
         SELECT t.* FROM trail t
         JOIN rover_trail rt ON t.id = rt.trail_id
         WHERE rt.rover_id = ?
         ORDER BY t.name
-    ''', [rover_id])
+    """, [rover_id])
     return jsonify([dict(trail) for trail in trails])
 
 
-@app.route('/api/rovers/<int:rover_id>/trails', methods=['POST'])
+@app.route("/api/rovers/<int:rover_id>/trails", methods=["POST"])
 def add_trail_to_rover(rover_id):
     data = request.json
-    trail_id = data.get('trail_id')
+    trail_id = data.get("trail_id")
     
     if not trail_id:
-        return jsonify({'error': 'Trail ID is required'}), 400
+        return jsonify({"error": "Trail ID is required"}), 400
     
     # Check if the association already exists
     existing = query_db(
-        'SELECT 1 FROM rover_trail WHERE rover_id = ? AND trail_id = ?',
+        "SELECT 1 FROM rover_trail WHERE rover_id = ? AND trail_id = ?",
         [rover_id, trail_id],
         one=True
     )
     
     if existing:
-        return jsonify({'error': 'Trail is already associated with this rover'}), 400
+        return jsonify({"error": "Trail is already associated with this rover"}), 400
     
     try:
         modify_db(
-            'INSERT INTO rover_trail (rover_id, trail_id) VALUES (?, ?)',
+            "INSERT INTO rover_trail (rover_id, trail_id) VALUES (?, ?)",
             (rover_id, trail_id)
         )
-        return jsonify({'success': True})
+        return jsonify({"success": True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/rovers/<int:rover_id>/trails/<int:trail_id>', methods=['DELETE'])
+@app.route("/api/rovers/<int:rover_id>/trails/<int:trail_id>", methods=["DELETE"])
 def remove_trail_from_rover(rover_id, trail_id):
     try:
         modify_db(
-            'DELETE FROM rover_trail WHERE rover_id = ? AND trail_id = ?',
+            "DELETE FROM rover_trail WHERE rover_id = ? AND trail_id = ?",
             (rover_id, trail_id)
         )
-        return jsonify({'success': True})
+        return jsonify({"success": True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 latest_gps_data = {
@@ -246,7 +247,7 @@ latest_gps_data = {
 }
 
 
-@app.route('/rover/get_coords', methods=['GET'])
+@app.route("/rover/get_coords", methods=["GET"])
 def get_coords():
     def event_stream():
         while True:
@@ -263,7 +264,7 @@ def update_gps():
     if gnssdata_dict:
         latest_gps_data.update(gnssdata_dict)
         latest_gps_data["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"Rover MAC: {gnssdata_dict['mac']}, {gnssdata_dict['fix_status']}, ({gnssdata_dict['latitude']}, {gnssdata_dict['longitude']})")
+        print(f"Rover MAC: {gnssdata_dict["mac"]}, {gnssdata_dict["fix_status"]}, ({gnssdata_dict["latitude"]}, {gnssdata_dict["longitude"]})")
 
         rover_data_queue.put(latest_gps_data)
         return "GPS Updated", 201
@@ -288,8 +289,8 @@ def format_utc_time(time_str):
 def register():
     data = request.json
     mac_dict = json.loads(data)
-    mac = mac_dict.get('mac')
-    rovers = query_db('SELECT * FROM rover ORDER BY id DESC')
+    mac = mac_dict.get("mac")
+    rovers = query_db("SELECT * FROM rover ORDER BY id DESC")
     rovers_list = [dict(rover) for rover in rovers]
     _rover_registered = any([rover.get("mac") == mac for rover in rovers_list])
     if _rover_registered:
@@ -302,11 +303,12 @@ def register():
 #  Simplest approach for demo purpose. Consider sockets or mqtt.
 trail_points_for_rover = {"mac": "", "trail_points": ""}
 
+
 @app.route("/trail/upload/<int:rover_id>/<int:trail_id>", methods=["POST"])
 def upload_trial_to_rover(rover_id, trail_id):
     global trail_points_for_rover
-    rover_mac = query_db('SELECT mac FROM rover WHERE id = ?', [rover_id], one=True)
-    trail_points = query_db('SELECT trail_points FROM trail WHERE id = ?', [trail_id], one=True)
+    rover_mac = query_db("SELECT mac FROM rover WHERE id = ?", [rover_id], one=True)
+    trail_points = query_db("SELECT trail_points FROM trail WHERE id = ?", [trail_id], one=True)
     trail_points_dict = dict(trail_points)
     trail_points_for_rover = dict(rover_mac)
     trail_points_for_rover.update(trail_points_dict)
@@ -315,18 +317,20 @@ def upload_trial_to_rover(rover_id, trail_id):
     else:
         return abort(400, "No trials to send.") 
 
-@app.route('/trail/upload', methods=['GET'])
+
+@app.route("/trail/upload", methods=["GET"])
 def get_data():
     global trail_points_for_rover
     tmp = trail_points_for_rover
     trail_points_for_rover = {"mac": "", "trail_points": ""}
     return jsonify(tmp)
 
-if __name__ == '__main__':
-# Create schema.sql file
+
+if __name__ == "__main__":
+    # Create schema.sql file.
     if not os.path.exists(DATABASE_SCHEMA):
-        with open(DATABASE_SCHEMA, 'w') as f:
-            f.write('''
+        with open(DATABASE_SCHEMA, "w") as f:
+            f.write("""
     -- Schema for Rover Management Database
 
     -- Rover table
@@ -334,7 +338,7 @@ if __name__ == '__main__':
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         mac TEXT NOT NULL,
         name TEXT NOT NULL,
-        status TEXT DEFAULT 'inactive',
+        status TEXT DEFAULT "inactive",
         last_active TEXT
     );
 
@@ -356,10 +360,10 @@ if __name__ == '__main__':
     
     -- Insert some sample
     INSERT OR IGNORE INTO rover (id, name, mac, status, last_active) VALUES
-        (1, 'Rover1', 'a8032a56ae8c', 'Inactive', '2025-01-01 22:22:22.22');
+        (1, "Rover1", "a8032a56ae8c", "Inactive", "2025-01-01 22:22:22.22");
     INSERT OR IGNORE INTO trail (id, name, trail_points) VALUES
-        (1, 'Example Trail', '[[45.123, -122.456], [45.124, -122.457]]');
-    ''')
+        (1, "Example Trail", "[[45.123, -122.456], [45.124, -122.457]]");
+    """)
     if not os.path.exists(DATABASE):
         init_db()
     app.run(host="0.0.0.0", port=5000, debug=True)
