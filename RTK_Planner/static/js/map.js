@@ -147,7 +147,19 @@ trailName.addEventListener("input", function () {
 trailSaveButton.addEventListener("click", function () {
     let points = [];
     sourceDrawVector.getFeatures().forEach(function (feature) {
-        points.push(feature.getGeometry().getCoordinates());
+        let coord = feature.getGeometry().getCoordinates();
+
+        // Convert coordinates to DD (Decimal Degrees).
+        if (typeof coord === "object" && coord.length > 0 && typeof coord[0] === "number") {
+            points.push(ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326'));
+        } else {
+            console.log("ERROR 1111");
+            coord.map(item => {
+                points.push(ol.proj.transform(item, 'EPSG:3857', 'EPSG:4326'));
+            });
+        }
+
+        // Remove feature to avoid adding coordinates second time in another trial.
         sourceDrawVector.removeFeature(feature);
     });
     if (points.length > 0) {
@@ -245,6 +257,9 @@ new EventSource('/rover/get_coords').onmessage = function (event) {
 
         document.getElementById(data.mac + '-last-update').textContent =
             data.last_update || '-';
+
+        document.getElementById(data.mac + '-su').textContent =
+            JSON.stringify(data.su) || '-';
 
         // Update map marker
         if (data.latitude && data.longitude && data.mac) {
