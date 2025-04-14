@@ -95,6 +95,7 @@ function renderRoverCard(rover, container, prepend = false) {
                                                 <td><strong>Last Update:</strong> <span id="${rover.mac}-last-update">-</span></td>
                                             </tr>
                                         </table>
+                                        <strong>Satellites in Use:</strong> <span id="${rover.mac}-su">-</span>
 
                                         <div class="trail-selector">
                                             <label><strong>Associated Trails:</strong></label>
@@ -294,7 +295,7 @@ function loadAssociatedTrails(roverId) {
                 trailDiv.innerHTML = `
                                                 ${trail.name}
                                                 <button class="button-danger" style="padding: 2px 5px; font-size: 12px;"
-                                                      onclick="removeTrailFromRover(${roverId}, ${trail.id})">×</button>
+                                                      onclick="removeTrailFromRover(${roverId}, ${trail.id})">ï¿½</button>
                                             `;
                 trailsContainer.appendChild(trailDiv);
             });

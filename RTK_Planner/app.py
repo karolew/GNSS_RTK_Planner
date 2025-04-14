@@ -243,7 +243,9 @@ latest_gps_data = {
     "speed": None,
     "course": None,
     "time_utc": None,
-    "last_update": None
+    "last_update": None,
+    "sv": None,
+    "su": None
 }
 
 
@@ -264,7 +266,11 @@ def update_gps():
     if gnssdata_dict:
         latest_gps_data.update(gnssdata_dict)
         latest_gps_data["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"Rover MAC: {gnssdata_dict["mac"]}, {gnssdata_dict["fix_status"]}, ({gnssdata_dict["latitude"]}, {gnssdata_dict["longitude"]})")
+        print(f"Rover MAC: {gnssdata_dict["mac"]}, "
+              f"{gnssdata_dict["fix_status"]}, "
+              f"({gnssdata_dict["latitude"]}, "
+              f"{gnssdata_dict["longitude"]}) "
+              f"Sat in Use: {gnssdata_dict["su"]}")
 
         rover_data_queue.put(latest_gps_data)
         return "GPS Updated", 201
@@ -290,13 +296,14 @@ def register():
     data = request.json
     mac_dict = json.loads(data)
     mac = mac_dict.get("mac")
+    print(f"Rover trying to connect, MAC: {mac}")
     rovers = query_db("SELECT * FROM rover ORDER BY id DESC")
     rovers_list = [dict(rover) for rover in rovers]
     _rover_registered = any([rover.get("mac") == mac for rover in rovers_list])
     if _rover_registered:
         return "Rover registered", 200
     else:
-        return abort(406, "Rover not registered.") 
+        return abort(406, "Rover not registered.")
 
 
 #  HTTP polling to update rover with trails. 
