@@ -168,7 +168,9 @@ class RTKPlanner:
         "speed": None,
         "course": None,
         "time_utc": None,
-        "last_update": None
+        "last_update": None,
+        "sv": None,
+        "su": None
     }
 
     def __init__(self, url, mac):
@@ -216,6 +218,8 @@ class RTKPlanner:
         self.gps_data["speed"] = nmea_data.speed
         self.gps_data["course"] = nmea_data.course
         self.gps_data["time_utc"] = nmea_data.time
+        self.gps_data["sv"] = nmea_data.gsv_data
+        self.gps_data["su"] = nmea_data.satellites_used
         self.gps_data["mac"] = self.mac
         try:
             response = urequests.post(self.url + "/rover/update_gps",
@@ -279,7 +283,7 @@ def main():
                 micro_nmea.parse(sentence)
 
                 # Send data to RTK Planner server.
-                if time_start + 1 < time.time():
+                if time.time() > time_start + 0.5:
                     rtk_planner.send_gnss_update(micro_nmea)
                     time_start = time.time()
             
