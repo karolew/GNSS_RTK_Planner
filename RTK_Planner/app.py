@@ -269,8 +269,9 @@ def update_gps():
         print(f"Rover MAC: {gnssdata_dict["mac"]}, "
               f"{gnssdata_dict["fix_status"]}, "
               f"({gnssdata_dict["latitude"]}, "
-              f"{gnssdata_dict["longitude"]}) "
-              f"Sat in Use: {gnssdata_dict["su"]}")
+              f"{gnssdata_dict["longitude"]})\n"
+              f"Sat in Use: {gnssdata_dict["su"]}\n",
+              f"Sat in View: {gnssdata_dict["sv"]}")
 
         rover_data_queue.put(latest_gps_data)
         return "GPS Updated", 201

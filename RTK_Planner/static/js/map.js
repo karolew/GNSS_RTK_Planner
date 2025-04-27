@@ -153,7 +153,6 @@ trailSaveButton.addEventListener("click", function () {
         if (typeof coord === "object" && coord.length > 0 && typeof coord[0] === "number") {
             points.push(ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326'));
         } else {
-            console.log("ERROR 1111");
             coord.map(item => {
                 points.push(ol.proj.transform(item, 'EPSG:3857', 'EPSG:4326'));
             });
@@ -238,13 +237,12 @@ new EventSource('/rover/get_coords').onmessage = function (event) {
         document.getElementById(data.mac + '-fix-status').className =
             data.fix_status != 'Unknown' ? 'status-valid' : 'status-invalid';
 
-
         document.getElementById(data.mac + '-raw-coords').textContent =
             data.lat_raw && data.lon_raw ? `${data.lat_raw} / ${data.lon_raw}` : '-';
 
         document.getElementById(data.mac + '-dec-coords').textContent =
             data.latitude && data.longitude ?
-                `${data.latitude.toFixed(7)}, ${data.longitude.toFixed(7)}` : '-';
+                `${data.latitude}, ${data.longitude}` : '-';
 
         document.getElementById(data.mac + '-speed').textContent =
             data.speed !== null ? `${data.speed} knots` : '-';
@@ -258,8 +256,16 @@ new EventSource('/rover/get_coords').onmessage = function (event) {
         document.getElementById(data.mac + '-last-update').textContent =
             data.last_update || '-';
 
-        document.getElementById(data.mac + '-su').textContent =
-            JSON.stringify(data.su) || '-';
+        let satUsed = "";
+        let totalSat = 0;
+        for (const [gnssSystem, satListAll] of Object.entries(data.su)) {
+            let satUsedList = satListAll.filter(sat => /\w+/.test(sat))
+            satUsed += gnssSystem + "[" + satUsedList + "] "
+            totalSat += satUsedList.length;
+        }
+        document.getElementById(data.mac + '-su').textContent = (
+            (totalSat > 0) ? `${totalSat} in total. ` + satUsed : 'Unknown'
+        );
 
         // Update map marker
         if (data.latitude && data.longitude && data.mac) {

@@ -212,8 +212,8 @@ class RTKPlanner:
             print('Error:', e)
 
     def send_gnss_update(self, nmea_data):
-        self.gps_data["latitude"] = float(nmea_data.lat)
-        self.gps_data["longitude"] = float(nmea_data.lon)
+        self.gps_data["latitude"] = nmea_data.lat
+        self.gps_data["longitude"] = nmea_data.lon
         self.gps_data["fix_status"] = nmea_data.quality
         self.gps_data["speed"] = nmea_data.speed
         self.gps_data["course"] = nmea_data.course
