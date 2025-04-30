@@ -1,3 +1,9 @@
 [submodule "microNMEA"]
 	path = microNMEA
 	url = https://github.com/karolew/microNMEA
+[submodule "microGY271"]
+	path = microGY271
+	url = https://github.com/karolew/microGY271.git
+[submodule "microMX1508"]
+	path = microMX1508
+	url = https://github.com/karolew/microMX1508.git
