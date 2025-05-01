@@ -151,10 +151,10 @@ trailSaveButton.addEventListener("click", function () {
 
         // Convert coordinates to DD (Decimal Degrees).
         if (typeof coord === "object" && coord.length > 0 && typeof coord[0] === "number") {
-            points.push(ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326'));
+            points.push(ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326').map((number) => number.toString()));
         } else {
             coord.map(item => {
-                points.push(ol.proj.transform(item, 'EPSG:3857', 'EPSG:4326'));
+                points.push(ol.proj.transform(item, 'EPSG:3857', 'EPSG:4326').map((number) => number.toString()));
             });
         }
 
