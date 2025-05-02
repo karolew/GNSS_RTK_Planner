@@ -4,9 +4,12 @@ import time
 
 import network
 import urequests
-from machine import UART
+from machine import UART, I2C, Pin
 
+from microGY271.gy271compass import QMC5883L
+from microMX1508.microMX1508 import microMX1508
 from microNMEA.microNMEA import MicroNMEA
+from navigation import Navigation
 
 try:
     import ubinascii as ubin
@@ -176,6 +179,7 @@ class RTKPlanner:
     def __init__(self, url, mac):
         self.url = url
         self.mac = mac
+        self.trail_points = []
 
     def register(self):
         while True:
@@ -201,15 +205,15 @@ class RTKPlanner:
             response = urequests.get(self.url + "/trail/upload")
             if response.status_code == 200:
                 data = response.json()
-                mac = data.get('mac')
-                trail_points = data.get('trail_points')
-
-                if mac == self.mac:
-                    print(f"Received new trails: {trail_points}")
+                if data.get('trail_points'):
+                    mac = data.get('mac')
+                    self.trail_points = json.loads(data.get('trail_points').replace("'", "\""))
+                    if mac == self.mac:
+                        print(f"Received new trails: {self.trail_points}.")
 
             response.close()
         except Exception as e:
-            print('Error:', e)
+            print("Error getting trails", e)
 
     def send_gnss_update(self, nmea_data):
         self.gps_data["latitude"] = nmea_data.lat
@@ -255,6 +259,28 @@ def main():
                                config["ntrip"]["password"])
     ntrip_client.connect()
 
+    # Compass.
+    compass = None
+    try:
+        i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=100000)
+        compass = QMC5883L(i2c, corrections={"x_offset": 162, "x_scale": 1.04, "y_offset": -211, "y_scale": 0.97})
+    except Exception as e:
+        print(f"ERROR Compass not started: {e}")
+
+    # Motors.
+    motors = None
+    try:
+        motors = microMX1508((27, 14), (12, 13), accel_rate=5)
+    except Exception as e:
+        print(f"ERROR Motors not started: {e}")
+
+    # Navigation.
+    nav = None
+    try:
+        nav = Navigation(15)
+    except Exception as e:
+        print(f"ERROR Navigation not started: {e}")
+
     # RTK Planner.
     rtk_planner = RTKPlanner(config["server"]["url"], wlan.get_mac())
 
@@ -262,8 +288,9 @@ def main():
     rtk_planner.register()
 
     # Main loop.
-    time_start = time.time()        # interval for gnss update
-    check_updates_s = time.time()   # interval for trail pull
+    check_updates_s = time.time()   # interval for trail pull.
+    previous_coordinates = (0, 0)   # To track coordinate changes.
+    target_coord = None
     while True:
         try:
             # Check WLAN status.
@@ -283,14 +310,34 @@ def main():
                 micro_nmea.parse(sentence)
 
                 # Send data to RTK Planner server.
-                if time.time() > time_start + 0.5:
+                if (micro_nmea.lat, micro_nmea.lon) != previous_coordinates:
                     rtk_planner.send_gnss_update(micro_nmea)
-                    time_start = time.time()
             
             # HTTP pull trails every 5 seconds.
             if time.time() - check_updates_s > 5:
                 rtk_planner.get_trails()
                 check_updates_s = time.time()
+
+            # Navigation part.
+            if rtk_planner.trail_points and compass and motors:
+                compass_heading = compass.get_heading()
+                if not target_coord:
+                    target_coord = (micro_nmea.lon, micro_nmea.lat)
+                nav_status = nav.navigate_to_target((micro_nmea.lon, micro_nmea.lat), target_coord, compass_heading)
+                if nav_status[3] <= 5:
+                    # If we are on the target point +-5cm, mark as ready.
+                    # Get next element from the trail.
+                    target_coord = rtk_planner.trail_points.pop(0)
+                else:
+                    if nav_status[0] == "left":
+                        print("Skrecamy w lewo")
+                    elif nav_status[0] == "right":
+                        print("Skrecamy w prawo")
+                    else:
+                        print("Jedziemy prosto")
+            else:
+                # Navigation finished.
+                target_coord = None
 
         except Exception as e:
             print(f"Main loop error: {e}")

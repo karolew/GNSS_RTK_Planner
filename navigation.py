@@ -10,11 +10,10 @@ class Navigation:
     !!! This solution do not support points that cross integer degree boundaries !!!
     """
 
-    def __init__(self, direction_threshold: int = 5, distance_threshold_cm: int = 5) -> None:
+    def __init__(self, direction_threshold: int = 5) -> None:
         self.meters_per_lat_degree = 111000
         self.meters_per_lon_degree_base = 111320
         self.direction_threshold = direction_threshold
-        self.distance_threshold_cm = distance_threshold_cm
 
     def meters_per_lon_degree(self, latitude: float) -> float:
         return self.meters_per_lon_degree_base * math.cos(math.radians(latitude))
