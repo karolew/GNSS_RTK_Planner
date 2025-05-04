@@ -1,4 +1,9 @@
 import math
+
+from machine import I2C
+
+from microGY271.gy271compass import QMC5883L
+from microMX1508.microMX1508 import microMX1508
 from microNMEA.microNMEA import Precise
 
 
@@ -10,10 +15,24 @@ class Navigation:
     !!! This solution do not support points that cross integer degree boundaries !!!
     """
 
-    def __init__(self, direction_threshold: int = 5) -> None:
+    def __init__(self, i2c: I2C,  direction_threshold: int = 5) -> None:
         self.meters_per_lat_degree = 111000
         self.meters_per_lon_degree_base = 111320
         self.direction_threshold = direction_threshold
+
+        # Compass.
+        self.compass = None
+        try:
+            self.compass = QMC5883L(i2c, corrections={"x_offset": 162, "x_scale": 1.04, "y_offset": -211, "y_scale": 0.97})
+        except Exception as e:
+            print(f"ERROR Compass not started: {e}")
+
+        # Motors.
+        self.motors = None
+        try:
+            self.motors = microMX1508((27, 14), (12, 13), accel_rate=5)
+        except Exception as e:
+            print(f"ERROR Motors not started: {e}")
 
     def meters_per_lon_degree(self, latitude: float) -> float:
         return self.meters_per_lon_degree_base * math.cos(math.radians(latitude))
