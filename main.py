@@ -57,7 +57,7 @@ def main():
     # Main loop.
     check_updates_s = time.time()   # interval for trail pull.
     previous_coordinates = (0, 0)   # To track coordinate changes.
-    target_coord = None
+
     while True:
         try:
             # Check WLAN status.
@@ -79,6 +79,7 @@ def main():
                 # Send data to RTK Planner server.
                 if (micro_nmea.lat, micro_nmea.lon) != previous_coordinates:
                     rtk_planner.send_gnss_update(micro_nmea)
+                    previous_coordinates = micro_nmea.lat, micro_nmea.lon
             
             # HTTP pull trails every 5 seconds.
             if time.time() - check_updates_s > 5:
@@ -86,25 +87,30 @@ def main():
                 check_updates_s = time.time()
 
             # Navigation part.
+            nav.motors.update()
             if rtk_planner.trail_points and nav.compass and nav.motors:
                 compass_heading = nav.compass.get_heading()
-                if not target_coord:
-                    target_coord = (micro_nmea.lon, micro_nmea.lat)
-                nav_status = nav.navigate_to_target((micro_nmea.lon, micro_nmea.lat), target_coord, compass_heading)
+                nav_status = nav.navigate_to_target((micro_nmea.lon, micro_nmea.lat),
+                                                    rtk_planner.trail_points[0],
+                                                    compass_heading)
                 if nav_status[3] <= 5:
                     # If we are on the target point +-5cm, mark as ready.
-                    # Get next element from the trail.
-                    target_coord = rtk_planner.trail_points.pop(0)
+                    # Remove current coordinates from the trail.
+                    rtk_planner.trail_points.pop(0)
+                    nav.stop()
                 else:
                     if nav_status[0] == "left":
                         print("Skrecamy w lewo")
+                        #nav.turn_left()
                     elif nav_status[0] == "right":
                         print("Skrecamy w prawo")
-                    else:
+                        #nav.turn_right()
+                    elif nav_status[0] == "on_target":
                         print("Jedziemy prosto")
-            else:
-                # Navigation finished.
-                target_coord = None
+                        #nav.forward()
+                    else:
+                        print("Stop")
+                        nav.stop()
 
         except Exception as e:
             print(f"Main loop error: {e}")
