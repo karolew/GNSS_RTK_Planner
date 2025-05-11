@@ -23,7 +23,12 @@ class Navigation:
         # Compass.
         self.compass = None
         try:
-            self.compass = QMC5883L(i2c, corrections={"x_offset": 162, "x_scale": 1.04, "y_offset": -211, "y_scale": 0.97})
+            self.compass = QMC5883L(i2c,
+                                    None,
+                                    (-2364, -496, 68),
+                                    [[1.118951, 0.0, 0.0],
+                                     [0.0, 1.07733, 0.0],
+                                     [0.0, 0.0, 0.8488354]])
         except Exception as e:
             print(f"ERROR Compass not started: {e}")
 
@@ -32,7 +37,7 @@ class Navigation:
         self.motors = None
         self.motors_status = "stop"
         try:
-            self.motors = microMX1508((27, 14), (12, 13), accel_rate=5)
+            self.motors = microMX1508((27, 14), (12, 13), accel_rate=5, max_speed_percent=30)
         except Exception as e:
             print(f"ERROR Motors not started: {e}")
 
@@ -89,49 +94,4 @@ class Navigation:
         # Ensure angle_diff is in the range 0-180
         if angle_diff > 180:
             angle_diff = 360 - angle_diff
-        print(direction, angle_diff, compass_heading, target_distance)
-        return "on_target" if on_target else direction, on_target, angle_diff, target_distance
-
-    def turn_right(self):
-        if self.motors_status == "right":
-            pass
-        elif self.motors_status != "stop":
-            self.stop()
-        else:
-            self.motors.set_motor1(self.max_speed_percent)
-            self.motors.set_motor2(-self.max_speed_percent)
-            self.motors_status = "right"
-
-    def turn_left(self):
-        if self.motors_status == "left":
-            pass
-        elif self.motors_status != "stop":
-            self.stop()
-        else:
-            self.motors.set_motor1(-self.max_speed_percent)
-            self.motors.set_motor2(self.max_speed_percent)
-            self.motors_status = "left"
-
-    def forward(self):
-        if self.motors_status == "forward":
-            pass
-        elif self.motors_status != "stop":
-            self.stop()
-        else:
-            self.motors.set_motor1(self.max_speed_percent)
-            self.motors.set_motor2(self.max_speed_percent)
-            self.motors_status = "forward"
-
-    def stop(self):
-        if self.motors_status == "stop":
-            pass
-        else:
-            self.motors.stop()
-            self.motors_status = "stop"
-
-
-if __name__ == "__main__":
-    nav = Navigation()
-    print(nav.navigate_to_target(["19.422820984529064", "51.77965793741643"],
-                                 ["19.42282015391812", "51.779658443248195"],
-                                 45))
+        return "on_target" if on_target else direction, on_target, angle_diff, target_distance, self.motors.motors_status

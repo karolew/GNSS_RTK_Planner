@@ -44,7 +44,7 @@ def main():
     nav = None
     try:
         i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=100000)
-        nav = Navigation(i2c, 20)
+        nav = Navigation(i2c)
     except Exception as e:
         print(f"ERROR Navigation not started: {e}")
 
@@ -87,30 +87,33 @@ def main():
                 check_updates_s = time.time()
 
             # Navigation part.
-            nav.motors.update()
-            if rtk_planner.trail_points and nav.compass and nav.motors:
-                compass_heading = nav.compass.get_heading()
-                nav_status = nav.navigate_to_target((micro_nmea.lon, micro_nmea.lat),
-                                                    rtk_planner.trail_points[0],
-                                                    compass_heading)
-                if nav_status[3] <= 5:
-                    # If we are on the target point +-5cm, mark as ready.
-                    # Remove current coordinates from the trail.
-                    rtk_planner.trail_points.pop(0)
-                    nav.stop()
-                else:
-                    if nav_status[0] == "left":
-                        print("Skrecamy w lewo")
-                        #nav.turn_left()
-                    elif nav_status[0] == "right":
-                        print("Skrecamy w prawo")
-                        #nav.turn_right()
-                    elif nav_status[0] == "on_target":
-                        print("Jedziemy prosto")
-                        #nav.forward()
-                    else:
-                        print("Stop")
-                        nav.stop()
+            if nav.motors:
+                nav.motors.update()     # Must be here to update stop
+                if rtk_planner.trail_points and nav.compass:
+                    compass_heading = nav.compass.get_heading()
+                    if compass_heading:
+                        nav_status = nav.navigate_to_target((micro_nmea.lon, micro_nmea.lat),
+                                                            rtk_planner.trail_points[0],
+                                                            compass_heading)
+                        if nav_status[3] <= 50:
+                            # If we are on the target point +-5cm, mark as ready.
+                            # Remove current coordinates from the trail.
+                            print("POINT OK ---------------------------------------------", rtk_planner.trail_points[0])
+                            rtk_planner.trail_points.pop(0)
+                            nav.motors.move_stop()
+                        else:
+                            if nav_status[0] == "left":
+                                print(*nav_status, compass_heading)
+                                nav.motors.turn_left()
+                            elif nav_status[0] == "right":
+                                print(*nav_status, compass_heading)
+                                nav.motors.turn_right()
+                            elif nav_status[0] == "on_target":
+                                print(*nav_status, compass_heading)
+                                nav.motors.move_forward()
+                            else:
+                                print("Stop", *nav_status, compass_heading)
+                                nav.motors.move_stop()
 
         except Exception as e:
             print(f"Main loop error: {e}")
