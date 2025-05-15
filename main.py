@@ -102,15 +102,33 @@ def main():
                             rtk_planner.trail_points.pop(0)
                             nav.motors.move_stop()
                         else:
-                            if nav_status[0] == "left":
-                                print(*nav_status, compass_heading)
-                                nav.motors.turn_left()
-                            elif nav_status[0] == "right":
-                                print(*nav_status, compass_heading)
-                                nav.motors.turn_right()
-                            elif nav_status[0] == "on_target":
-                                print(*nav_status, compass_heading)
-                                nav.motors.move_forward()
+                            current_heading = compass_heading % 360
+                            diff = abs(current_heading - nav_status[2])
+                            clockwise_diff = (nav_status[2] - current_heading) % 360
+                            counter_clockwise_diff = (current_heading - nav_status[2]) % 360
+
+                            if diff <= nav.direction_threshold or (360 - diff) <= nav.direction_threshold:
+                                nav.motors.forward()
+                            elif clockwise_diff < counter_clockwise_diff:
+                                turn_level = abs(clockwise_diff - nav.direction_threshold)
+                                if turn_level <= 10:
+                                    nav.motors.turn_right(0)
+                                elif 10 < turn_level <= 25:
+                                    nav.motors.turn_right(1)
+                                elif 25 < turn_level <= 45:
+                                    nav.motors.turn_right(2)
+                                else:
+                                    nav.motors.turn_right(3)
+                            elif clockwise_diff >= counter_clockwise_diff:
+                                turn_level = abs(counter_clockwise_diff - nav.direction_threshold)
+                                if turn_level <= 10:
+                                    nav.motors.turn_left(0)
+                                elif 10 < turn_level <= 25:
+                                    nav.motors.turn_left(1)
+                                elif 25 < turn_level <= 45:
+                                    nav.motors.turn_left(2)
+                                else:
+                                    nav.motors.turn_left(3)
                             else:
                                 print("Stop", *nav_status, compass_heading)
                                 nav.motors.move_stop()
