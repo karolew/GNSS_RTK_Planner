@@ -35,9 +35,11 @@ class Navigation:
         # Motors.
         self.max_speed_percent = 30     # range 0 - 100 %
         self.motors = None
-        self.motors_status = "stop"
         try:
-            self.motors = microMX1508((27, 14), (12, 13), accel_rate=5, max_speed_percent=30)
+            self.motors = microMX1508((27, 14),
+                                      (12, 13),
+                                      accel_step=200,
+                                      max_duty=512)
         except Exception as e:
             print(f"ERROR Motors not started: {e}")
 
@@ -94,4 +96,4 @@ class Navigation:
         # Ensure angle_diff is in the range 0-180
         if angle_diff > 180:
             angle_diff = 360 - angle_diff
-        return "on_target" if on_target else direction, on_target, angle_diff, target_distance, self.motors.motors_status
+        return "on_target" if on_target else direction, on_target, angle_diff, target_distance
