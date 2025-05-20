@@ -266,12 +266,12 @@ def update_gps():
     if gnssdata_dict:
         latest_gps_data.update(gnssdata_dict)
         latest_gps_data["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"Rover MAC: {gnssdata_dict["mac"]}, "
-              f"{gnssdata_dict["fix_status"]}, "
-              f"({gnssdata_dict["latitude"]}, "
-              f"{gnssdata_dict["longitude"]})\n"
-              f"Sat in Use: {gnssdata_dict["su"]}\n",
-              f"Sat in View: {gnssdata_dict["sv"]}")
+        print(f"Rover MAC: {gnssdata_dict['mac']}, "
+              f"{gnssdata_dict['fix_status']}, "
+              f"({gnssdata_dict['latitude']}, "
+              f"{gnssdata_dict['longitude']})\n"
+              f"Sat in Use: {gnssdata_dict['su']}\n",
+              f"Sat in View: {gnssdata_dict['sv']}")
 
         rover_data_queue.put(latest_gps_data)
         return "GPS Updated", 201
