@@ -4,6 +4,21 @@ Define Map Layers
 
 const OSMLayer = new ol.layer.Tile({
     source: new ol.source.OSM(),
+    visible: false
+});
+
+const satelliteLayer = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+        url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+    }),
+    visible: true
+});
+
+const hybridLabelsLayer = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+        url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}'
+    }),
+    visible: true
 });
 
 const sourceDrawVector = new ol.source.Vector({ wrapX: false });
@@ -50,16 +65,51 @@ Define Map
 */
 const map = new ol.Map({
     target: 'map',
-    layers: [OSMLayer, vectorDrawLayer, vectorLayer],
+    layers: [OSMLayer, satelliteLayer, hybridLabelsLayer, vectorDrawLayer, vectorLayer],
     view: new ol.View({
         center: ol.proj.fromLonLat([0, 0]),
-        zoom: 2
-    })
+        zoom: 3,
+        minZoom: 2,
+        maxZoom: 25
+    }),
+    controls: ol.control.defaults.defaults({
+        attributionOptions: {
+            collapsible: false
+        }
+    }).extend([
+        new ol.control.ScaleLine(),
+        new ol.control.FullScreen()
+    ])
 });
 
 /*
 Functionalities
 */
+// Map layers methods.
+
+// Add radio button event listeners
+document.querySelectorAll('input[name="mapLayer"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+        switchLayer(this.value);
+    });
+});
+
+// Layer switching function
+function switchLayer(layerType) {
+    switch (layerType) {
+        case 'street':
+            OSMLayer.setVisible(true);
+            satelliteLayer.setVisible(false);
+            hybridLabelsLayer.setVisible(false);
+            break;
+        case 'ortofoto':
+            OSMLayer.setVisible(false);
+            satelliteLayer.setVisible(true);
+            hybridLabelsLayer.setVisible(true);
+            break;
+    }
+}
+
 // Draw Methods
 const drawTypeSelect = document.getElementById('draw-type');
 
