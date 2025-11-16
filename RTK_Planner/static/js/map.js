@@ -174,7 +174,7 @@ drawTypeSelect.onchange = function (e) {
     addInteraction();
 };
 
-document.getElementById('undo').addEventListener('click', function () {
+document.getElementById('undo-button').addEventListener('click', function () {
     draw.removeLastPoint();
 });
 
