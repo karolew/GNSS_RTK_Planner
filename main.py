@@ -98,7 +98,7 @@ if __name__ == "__main__":
                 # Check trail points are present and compass in working.
                 # Stop motor if these conditions are not meet.
                 if not rtk_planner.trail_points or not nav.compass:
-                    print("Stop")
+                    print(nav.compass.get_heading())
                     nav.motors.stop()
                     continue
 
@@ -121,32 +121,43 @@ if __name__ == "__main__":
                     diff = abs(current_heading - nav_status[2])
                     clockwise_diff = (nav_status[2] - current_heading) % 360
                     counter_clockwise_diff = (current_heading - nav_status[2]) % 360
+                    print(nav.compass.get_heading(), diff, clockwise_diff, counter_clockwise_diff)
 
                     if diff <= nav.direction_threshold or (360 - diff) <= nav.direction_threshold:
                         nav.motors.forward()
+                        print("PROSTO")
                     elif clockwise_diff < counter_clockwise_diff:
                         turn_level = abs(clockwise_diff - nav.direction_threshold)
                         if turn_level <= 10:
                             nav.motors.turn_right(0)
+                            print("PROSTO PRAWO 0")
                         elif 10 < turn_level <= 20:
                             nav.motors.turn_right(1)
+                            print("PROSTO PRAWO 1")
                         elif 20 < turn_level <= 30:
                             nav.motors.turn_right(2)
+                            print("PROSTO PRAWO 2")
                         else:
                             nav.motors.turn_right(3)
+                            print("ZAWRACANIE PRAWO")
                     elif clockwise_diff >= counter_clockwise_diff:
                         turn_level = abs(counter_clockwise_diff - nav.direction_threshold)
                         if turn_level <= 10:
                             nav.motors.turn_left(0)
+                            print("PROSTO LEWO 0")
                         elif 10 < turn_level <= 20:
                             nav.motors.turn_left(1)
+                            print("PROSTO LEWO 1")
                         elif 20 < turn_level <= 30:
                             nav.motors.turn_left(2)
+                            print("PROSTO LEWO 2")
                         else:
                             nav.motors.turn_left(3)
+                            print("ZAWRACANIE LEWO")
                     else:
                         print("Stop", *nav_status, compass_heading)
                         nav.motors.move_stop()
+                        print("STOP")
 
         except Exception as e:
             print(f"Main loop error: {e}")
