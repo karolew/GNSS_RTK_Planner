@@ -7,3 +7,6 @@
 [submodule "microMX1508"]
 	path = microMX1508
 	url = https://github.com/karolew/microMX1508.git
+[submodule "microIMU9v6"]
+	path = microIMU9v6
+	url = https://github.com/karolew/microIMU9v6
