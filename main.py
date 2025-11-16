@@ -90,7 +90,7 @@ if __name__ == "__main__":
                 check_updates_s = time.time()
 
             # Navigation part.
-            # If motors are present
+            # If motors are present do nothing.
             if nav.motors:
                 # Must be here to update stop.
                 nav.motors.update()
@@ -98,12 +98,12 @@ if __name__ == "__main__":
                 # Check trail points are present and compass in working.
                 # Stop motor if these conditions are not meet.
                 if not rtk_planner.trail_points or not nav.compass:
-                    print(nav.compass.get_heading())
+                    print(nav.compass.get_tilt_compensated_heading())
                     nav.motors.stop()
                     continue
 
                 # If compass heading calculation is incorrect or crashed skip it.
-                compass_heading = nav.compass.get_heading()
+                compass_heading = nav.compass.get_tilt_compensated_heading()
                 if not compass_heading:
                     continue
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
                     diff = abs(current_heading - nav_status[2])
                     clockwise_diff = (nav_status[2] - current_heading) % 360
                     counter_clockwise_diff = (current_heading - nav_status[2]) % 360
-                    print(nav.compass.get_heading(), diff, clockwise_diff, counter_clockwise_diff)
+                    print(nav.compass.get_tilt_compensated_heading(), diff, clockwise_diff, counter_clockwise_diff)
 
                     if diff <= nav.direction_threshold or (360 - diff) <= nav.direction_threshold:
                         nav.motors.forward()

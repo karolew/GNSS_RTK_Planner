@@ -2,7 +2,7 @@ import math
 
 from machine import I2C
 
-from microGY271.gy271compass import QMC5883L
+from microIMU9v6.imu9v6 import MinIMU9v6
 from microMX1508.microMX1508 import microMX1508
 from microNMEA.microNMEA import Precise
 
@@ -23,12 +23,7 @@ class Navigation:
         # Compass.
         self.compass = None
         try:
-            self.compass = QMC5883L(i2c,
-                                    None,
-                                    (-2364, -496, 68),
-                                    [[1.118951, 0.0, 0.0],
-                                     [0.0, 1.07733, 0.0],
-                                     [0.0, 0.0, 0.8488354]])
+            self.compass = MinIMU9v6(i2c, calibrate=False)
         except Exception as e:
             print(f"ERROR Compass not started: {e}")
 
