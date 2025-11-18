@@ -17,22 +17,32 @@ except:
 
 
 if __name__ == "__main__":
+    # --------------------------------------------------
     # Load configuration.
+    # --------------------------------------------------
     with open("config.json") as cfgf:
         config = json.load(cfgf)
 
-    # WLAN.
+    # --------------------------------------------------
+    # Prepare WLAN.
+    # --------------------------------------------------
     wlan = WLAN(config["wifi"]["ssid"],
                 config["wifi"]["password"])
     wlan.connect()
 
-    # UART.
+    # --------------------------------------------------
+    # Prepare UART to communicate with RTK module.
+    # --------------------------------------------------
     gps_uart = PX1122RUART(uart_id=2)
 
-    # NMEA decoder.
+    # --------------------------------------------------
+    # Prepare NMEA decoder.
+    # --------------------------------------------------
     micro_nmea = MicroNMEA(units=1)
 
-    # NTRIP server.
+    # --------------------------------------------------
+    # Prepare NTRIP server.
+    # --------------------------------------------------
     ntrip_client = NTRIPClient(config["ntrip"]["host"],
                                config["ntrip"]["port"],
                                config["ntrip"]["mountpoint"],
@@ -40,7 +50,20 @@ if __name__ == "__main__":
                                config["ntrip"]["password"])
     ntrip_client.connect()
 
-    # Navigation.
+    # --------------------------------------------------
+    # Prepare Compass and driving motors.
+    # --------------------------------------------------
+
+    # Button and led status for compass calibration.
+    compas_calibration = False
+    def handle_interrupt_for_compass_calibration(pin) -> None:
+        global compas_calibration
+        compas_calibration = True
+    compass_calibration_led_status = Pin(23, Pin.OUT)
+    compass_calibration_button = Pin(26, Pin.IN, Pin.PULL_UP)
+    compass_calibration_button.irq(trigger=Pin.IRQ_FALLING, handler=handle_interrupt_for_compass_calibration)
+
+    # Compass and driving motors.
     nav = None
     try:
         i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=100000)
@@ -48,7 +71,9 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"ERROR Navigation not started: {e}")
 
+    # --------------------------------------------------
     # RTK Planner.
+    # --------------------------------------------------
     rtk_planner = RTKPlanner(config["server"]["url"], wlan.get_mac())
 
     # Rover must be registered in RTK planner first.
@@ -60,7 +85,11 @@ if __name__ == "__main__":
     previous_coordinates = (0, 0)   # To track coordinate changes.
     target_threshold = 50           # TODO should be configurable from portal.
 
+    # --------------------------------------------------
+    #
     # Start main loop.
+    #
+    # --------------------------------------------------
     while True:
         try:
             # Check WLAN status.
@@ -90,6 +119,13 @@ if __name__ == "__main__":
                 check_updates_s = time.time()
 
             # Navigation part.
+            # Calibrate compass if button is pressed.
+            if nav.compass and compas_calibration:
+                compass_calibration_led_status.value(1)
+                nav.compass.calibrate_magnetometer()
+                compass_calibration_led_status.value(0)
+                compas_calibration = False
+
             # If motors are present do nothing.
             if nav.motors:
                 # Must be here to update stop.

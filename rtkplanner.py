@@ -41,7 +41,7 @@ class RTKPlanner:
                 else:
                     print("Rover is NOT registered. Wait for confirmation.")
             except Exception as e:
-                print(f"Failed to send mac: {e}")
+                print(f"Failed to send mac {self.mac}: {e}")
             time.sleep(2)
 
     def get_trails(self):
