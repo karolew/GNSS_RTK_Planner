@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # --------------------------------------------------
     # RTK Planner.
     # --------------------------------------------------
-    rtk_planner = RTKPlanner(config["server"]["url"], wlan.get_mac())
+    rtk_planner = RTKPlanner(config["server"]["host"], config["server"]["port"], wlan.get_mac())
 
     # Rover must be registered in RTK planner first.
     rtk_planner.register()

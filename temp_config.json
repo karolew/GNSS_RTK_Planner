@@ -16,6 +16,7 @@
 
   "server":
   {
-    "url": "<URL_of_RTK_Planner>"
+    "host": "<Host_of_RTK_Planner>",
+    "port": 5000
   }
 }

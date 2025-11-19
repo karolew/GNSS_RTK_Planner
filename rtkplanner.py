@@ -21,8 +21,8 @@ class RTKPlanner:
         "su": None
     }
 
-    def __init__(self, url, mac):
-        self.url = url
+    def __init__(self, host: str, port: str, mac):
+        self.url = f"http://{host}:{port}"
         self.mac = mac
         self.trail_points = []
 
