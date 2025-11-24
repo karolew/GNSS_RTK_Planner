@@ -5,7 +5,7 @@ from machine import I2C, Pin
 
 from esp32board import WLAN
 from microNMEA.microNMEA import MicroNMEA
-from navigation import Navigation
+from navigation import Navigation, Movement
 from ntripclient import NTRIPClient
 from px11222r import PX1122RUART
 from rtkplanner import RTKPlanner
@@ -64,12 +64,10 @@ if __name__ == "__main__":
     compass_calibration_button.irq(trigger=Pin.IRQ_FALLING, handler=handle_interrupt_for_compass_calibration)
 
     # Compass and driving motors.
-    nav = None
-    try:
-        i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=100000)
-        nav = Navigation(i2c)
-    except Exception as e:
-        print(f"ERROR Navigation not started: {e}")
+    i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=100000)
+    nav = Navigation(i2c)
+    mov = Movement((27, 14), (12, 13), tolerance = 5)
+
 
     # --------------------------------------------------
     # RTK Planner.
@@ -83,7 +81,7 @@ if __name__ == "__main__":
     check_updates_s = time.time()   # Timer for trail pull.
     check_updates_interval_s = 5    # Interval for trail pull.
     previous_coordinates = (0, 0)   # To track coordinate changes.
-    target_threshold = 50           # TODO should be configurable from portal.
+    target_threshold = 50  # TODO should be configurable from portal.
 
     # --------------------------------------------------
     #
@@ -120,80 +118,26 @@ if __name__ == "__main__":
 
             # Navigation part.
             # Calibrate compass if button is pressed.
-            if nav.compass and compas_calibration:
-                compass_calibration_led_status.value(1)
-                nav.compass.calibrate_magnetometer()
-                compass_calibration_led_status.value(0)
-                compas_calibration = False
+            # if compas_calibration:
+            #     compass_calibration_led_status.value(1)
+            #     nav.compass.calibrate_magnetometer()
+            #     compass_calibration_led_status.value(0)
+            #     compas_calibration = False
+            print("NAV & MOV")
 
-            # If motors are present do nothing.
-            if nav.motors:
-                # Must be here to update stop.
-                nav.motors.update()
+            # Check trail points are not empty.
+            # Stop motor if these conditions are not meet.
+            if not rtk_planner.trail_points:
+                mov.move(-1, -1, True)
+                continue
 
-                # Check trail points are present and compass in working.
-                # Stop motor if these conditions are not meet.
-                if not rtk_planner.trail_points or not nav.compass:
-                    print(nav.compass.get_tilt_compensated_heading())
-                    nav.motors.stop()
-                    continue
-
-                # If compass heading calculation is incorrect or crashed skip it.
-                compass_heading = nav.compass.get_tilt_compensated_heading()
-                if not compass_heading:
-                    continue
-
-                nav_status = nav.navigate_to_target((micro_nmea.lon, micro_nmea.lat),
-                                                    rtk_planner.trail_points[0],
-                                                    compass_heading)
-                if nav_status[3] <= target_threshold:
-                    # If rover is on the target point +-target_threshold, mark as ready.
-                    # Remove current coordinates from the trail.
-                    nav.motors.move_stop()
-                    print(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
-                    rtk_planner.trail_points.pop(0)
-                else:
-                    current_heading = compass_heading % 360
-                    diff = abs(current_heading - nav_status[2])
-                    clockwise_diff = (nav_status[2] - current_heading) % 360
-                    counter_clockwise_diff = (current_heading - nav_status[2]) % 360
-                    print(nav.compass.get_tilt_compensated_heading(), diff, clockwise_diff, counter_clockwise_diff)
-
-                    if diff <= nav.direction_threshold or (360 - diff) <= nav.direction_threshold:
-                        nav.motors.forward()
-                        print("PROSTO")
-                    elif clockwise_diff < counter_clockwise_diff:
-                        turn_level = abs(clockwise_diff - nav.direction_threshold)
-                        if turn_level <= 10:
-                            nav.motors.turn_right(0)
-                            print("PROSTO PRAWO 0")
-                        elif 10 < turn_level <= 20:
-                            nav.motors.turn_right(1)
-                            print("PROSTO PRAWO 1")
-                        elif 20 < turn_level <= 30:
-                            nav.motors.turn_right(2)
-                            print("PROSTO PRAWO 2")
-                        else:
-                            nav.motors.turn_right(3)
-                            print("ZAWRACANIE PRAWO")
-                    elif clockwise_diff >= counter_clockwise_diff:
-                        turn_level = abs(counter_clockwise_diff - nav.direction_threshold)
-                        if turn_level <= 10:
-                            nav.motors.turn_left(0)
-                            print("PROSTO LEWO 0")
-                        elif 10 < turn_level <= 20:
-                            nav.motors.turn_left(1)
-                            print("PROSTO LEWO 1")
-                        elif 20 < turn_level <= 30:
-                            nav.motors.turn_left(2)
-                            print("PROSTO LEWO 2")
-                        else:
-                            nav.motors.turn_left(3)
-                            print("ZAWRACANIE LEWO")
-                    else:
-                        print("Stop", *nav_status, compass_heading)
-                        nav.motors.move_stop()
-                        print("STOP")
+            print(rtk_planner.trail_points[0])
+            dist, target_heading, current_heading = nav.calculate_distance_bearing(micro_nmea.lon, micro_nmea.lat,
+                                                                                   *rtk_planner.trail_points[0])
+            mov.move(current_heading, target_heading, False)
+            if dist <= target_threshold:
+                print(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
+                rtk_planner.trail_points.pop(0)
 
         except Exception as e:
             print(f"Main loop error: {e}")

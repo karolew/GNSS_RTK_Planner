@@ -1,4 +1,4 @@
-import math
+import sys
 
 from machine import I2C
 
@@ -8,16 +8,17 @@ from microNMEA.microNMEA import Precise
 
 
 class Movement:
-    def __init__(self, motor_a = (27, 14), motor_b = (12, 13), tolerance = 5) -> None:
-        self.tolerance = tolerance
+    def __init__(self, motor_a = (27, 14), motor_b = (12, 13), tolerance_heading = 5) -> None:
+        self.tolerance_heading = tolerance_heading
         self.motors = None
         try:
-            self.motors = microMX1508(*motor_a, *motor_b, accel_step=200, max_duty=512)
+            self.motors = microMX1508(motor1_pins = motor_a, motor2_pins = motor_b, accel_step=200, max_duty=512)
         except Exception as e:
             print(f"ERROR Motors not started: {e}")
+            sys.exit(1)
 
     def _turn_speed(self, abs_diff):
-        if self.tolerance < abs_diff <= 20:
+        if self.tolerance_heading < abs_diff <= 20:
             return 0
         elif 20 < abs_diff <= 50:
             return 1
@@ -46,7 +47,7 @@ class Movement:
             diff += 360
 
         # If the absolute value is withing acceptable margin, move forward.
-        if abs_diff <= self.tolerance:
+        if abs_diff <= self.tolerance_heading:
             print('forward', actual_h, target_h)
             self.motors.forward()
             self.motors.update()
@@ -66,12 +67,12 @@ class Movement:
 
 class Navigation:
     def __init__(self, i2c: I2C) -> None:
-        # Compass.
         self.compass = None
         try:
             self.compass = MinIMU9v6(i2c, calibrate=False)
         except Exception as e:
             print(f"ERROR Compass not started: {e}")
+            sys.exit(1)
 
     def isqrt(self, n):
         """Integer square root using Newton's method"""
@@ -192,7 +193,7 @@ class Navigation:
         lat1_str, lon1_str: Point A coordinates as strings (e.g., "49.951389")
         lat2_str, lon2_str: Point B coordinates as strings (e.g., "49.951391")
         Returns:
-            tuple: (distance_cm, bearing_deg_x100)
+            tuple: (distance_cm, bearing_deg_x100, heading_deg)
                    distance_cm: distance in centimeters
                    bearing_deg_x100: bearing * 100 (e.g., 1700 = 17.00°)
         """
@@ -245,4 +246,4 @@ class Navigation:
         if bearing_x100 < 0:
             bearing_x100 += 36000
 
-        return dist_cm, bearing_x100//100
+        return dist_cm, bearing_x100//100, self.compass.get_tilt_compensated_heading()
