@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # Compass and driving motors.
     i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=100000)
     nav = Navigation(i2c)
-    mov = Movement((27, 14), (12, 13), tolerance = 5)
+    mov = Movement((27, 14), (12, 13), tolerance_heading = 5)
 
 
     # --------------------------------------------------
@@ -81,6 +81,7 @@ if __name__ == "__main__":
     check_updates_s = time.time()   # Timer for trail pull.
     check_updates_interval_s = 5    # Interval for trail pull.
     previous_coordinates = (0, 0)   # To track coordinate changes.
+    previous_quality = ""
     target_threshold = 50  # TODO should be configurable from portal.
 
     # --------------------------------------------------
@@ -107,9 +108,11 @@ if __name__ == "__main__":
                 micro_nmea.parse(sentence)
 
                 # Send data to RTK Planner server.
-                if (micro_nmea.lat, micro_nmea.lon) != previous_coordinates:
+                if ((micro_nmea.lat, micro_nmea.lon) != previous_coordinates
+                        or micro_nmea.quality != previous_quality):
                     rtk_planner.send_gnss_update(micro_nmea)
                     previous_coordinates = micro_nmea.lat, micro_nmea.lon
+                    previous_quality = micro_nmea.quality
             
             # HTTP pull trails every 5 seconds.
             if time.time() - check_updates_s > check_updates_interval_s:
@@ -123,18 +126,20 @@ if __name__ == "__main__":
             #     nav.compass.calibrate_magnetometer()
             #     compass_calibration_led_status.value(0)
             #     compas_calibration = False
-            print("NAV & MOV")
 
-            # Check trail points are not empty.
-            # Stop motor if these conditions are not meet.
-            if not rtk_planner.trail_points:
+            if micro_nmea.quality not in ["SPS Fix", "RTK Fix", "RTK Float"]:
+                print("No RTK fix")
                 mov.move(-1, -1, True)
                 continue
 
-            print(rtk_planner.trail_points[0])
-            dist, target_heading, current_heading = nav.calculate_distance_bearing(micro_nmea.lon, micro_nmea.lat,
-                                                                                   *rtk_planner.trail_points[0])
+            if not rtk_planner.trail_points:
+                mov.move(-1, -1, True)
+                print("NO TRAIL")
+                continue
+
+            dist, target_heading, current_heading = nav.calculate_distance_bearing(*rtk_planner.trail_points[0], micro_nmea.lon, micro_nmea.lat)
             mov.move(current_heading, target_heading, False)
+            print("POS", micro_nmea.lon, micro_nmea.lat, "MOVING to: ", rtk_planner.trail_points[0], dist, target_heading, current_heading)
             if dist <= target_threshold:
                 print(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
                 rtk_planner.trail_points.pop(0)
