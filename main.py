@@ -1,7 +1,7 @@
 import json
 import time
 
-from machine import I2C, Pin
+from machine import I2C, Pin, Timer
 
 from esp32board import WLAN
 from microNMEA.microNMEA import MicroNMEA
@@ -55,12 +55,22 @@ if __name__ == "__main__":
     # --------------------------------------------------
 
     # Button and led status for compass calibration.
-    compas_calibration = False
-    def handle_interrupt_for_compass_calibration(pin) -> None:
-        global compas_calibration
-        compas_calibration = True
+    timer = Timer(0)
+    compass_calibration = False
+    compass_long_press_ms = 2000
     compass_calibration_led_status = Pin(23, Pin.OUT)
     compass_calibration_button = Pin(26, Pin.IN, Pin.PULL_UP)
+
+    def compass_on_long_press(t):
+        global compass_calibration
+        if compass_calibration_button.value() == 0:
+            compass_calibration = True
+
+    def handle_interrupt_for_compass_calibration(pin) -> None:
+        if pin.value() == 0:
+            timer.init(period=compass_long_press_ms, mode=Timer.ONE_SHOT, callback=compass_on_long_press)
+        else:
+            timer.deinit()
     compass_calibration_button.irq(trigger=Pin.IRQ_FALLING, handler=handle_interrupt_for_compass_calibration)
 
     # Compass and driving motors.
@@ -121,11 +131,11 @@ if __name__ == "__main__":
 
             # Navigation part.
             # Calibrate compass if button is pressed.
-            # if compas_calibration:
-            #     compass_calibration_led_status.value(1)
-            #     nav.compass.calibrate_magnetometer()
-            #     compass_calibration_led_status.value(0)
-            #     compas_calibration = False
+            if compass_calibration:
+                compass_calibration_led_status.value(1)
+                nav.compass.calibrate_magnetometer()
+                compass_calibration_led_status.value(0)
+                compass_calibration = False
 
             if micro_nmea.quality not in ["SPS Fix", "RTK Fix", "RTK Float"]:
                 print("No RTK fix")
