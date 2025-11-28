@@ -3,7 +3,7 @@ import time
 
 from machine import I2C, Pin, Timer
 
-from esp32board import WLAN
+from esp32board import WLAN, Logger
 from microNMEA.microNMEA import MicroNMEA
 from navigation import Navigation, Movement
 from ntripclient import NTRIPClient
@@ -17,6 +17,11 @@ except:
 
 
 if __name__ == "__main__":
+    # --------------------------------------------------
+    # Logger init.
+    # --------------------------------------------------
+    log = Logger("rover.log")
+
     # --------------------------------------------------
     # Load configuration.
     # --------------------------------------------------
@@ -92,7 +97,7 @@ if __name__ == "__main__":
     check_updates_interval_s = 5    # Interval for trail pull.
     previous_coordinates = (0, 0)   # To track coordinate changes.
     previous_quality = ""
-    target_threshold = 50  # TODO should be configurable from portal.
+    target_threshold_cm = 50  # TODO should be configurable from portal.
 
     # --------------------------------------------------
     #
@@ -138,21 +143,21 @@ if __name__ == "__main__":
                 compass_calibration = False
 
             if micro_nmea.quality not in ["SPS Fix", "RTK Fix", "RTK Float"]:
-                print("No RTK fix")
+                log.info("No RTK fix")
                 mov.move(-1, -1, True)
                 continue
 
             if not rtk_planner.trail_points:
                 mov.move(-1, -1, True)
-                print("NO TRAIL")
+                log.info("NO TRAIL")
                 continue
 
             dist, target_heading, current_heading = nav.calculate_distance_bearing(*rtk_planner.trail_points[0], micro_nmea.lon, micro_nmea.lat)
             mov.move(current_heading, target_heading, False)
-            print("POS", micro_nmea.lon, micro_nmea.lat, "MOVING to: ", rtk_planner.trail_points[0], dist, target_heading, current_heading)
-            if dist <= target_threshold:
-                print(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
+            log.info("POS", micro_nmea.lon, micro_nmea.lat, "MOVING to: ", rtk_planner.trail_points[0], dist, target_heading, current_heading)
+            if dist <= target_threshold_cm:
+                log.info(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
                 rtk_planner.trail_points.pop(0)
 
         except Exception as e:
-            print(f"Main loop error: {e}")
+            log.info(f"Main loop error: {e}")

@@ -1,6 +1,7 @@
 import time
 
 import network
+import time
 
 try:
     import ubinascii as ubin
@@ -37,3 +38,15 @@ class WLAN:
             mac_raw = self.sta_if.config("mac")
             mymac = ubin.hexlify(mac_raw).decode()
             return mymac
+
+class Logger:
+    def __init__(self, file_path_to_log: str) -> None:
+        self.file_path_to_log = file_path_to_log
+
+    def _get_timestamp(self) -> str:
+        year, month, day, _, hour, minute, second, _ = time.localtime()
+        return "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second)
+
+    def info(self, message: str) -> None:
+        with open(self.file_path_to_log, "a") as f:
+            f.write(self._get_timestamp() + ": " + str(message) + "\n")
