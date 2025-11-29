@@ -38,13 +38,14 @@ class Movement:
         actual_h = current_heading % 360
         target_h = target_heading % 360
         diff = target_h - actual_h
-        abs_diff = abs(diff)
 
         # Normalize the <0 ; 360> range to <-180 ; 180> range.
         if diff > 180:
             diff -= 360
         elif diff < -180:
             diff += 360
+
+        abs_diff = abs(diff)
 
         # If the absolute value is withing acceptable margin, move forward.
         if abs_diff <= self.tolerance_heading:
