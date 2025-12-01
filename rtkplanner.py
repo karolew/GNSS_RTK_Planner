@@ -52,8 +52,8 @@ class RTKPlanner:
                 data = response.json()
                 if data.get('trail_points'):
                     mac = data.get('mac')
-                    self.trail_points = json.loads(data.get('trail_points').replace("'", "\""))
                     if mac == self.mac:
+                        self.trail_points = json.loads(data.get('trail_points').replace("'", "\""))
                         print(f"Received new trails: {self.trail_points}.")
 
             response.close()
