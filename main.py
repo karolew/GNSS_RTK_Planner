@@ -3,9 +3,10 @@ import time
 
 from machine import I2C, Pin, Timer
 
+from boot_main_config import *
 from esp32board import WLAN, Logger
 from microNMEA.microNMEA import MicroNMEA
-from navigation import Navigation, Movement
+from navigation import Movement, Navigation
 from ntripclient import NTRIPClient
 from px11222r import PX1122RUART
 from rtkplanner import RTKPlanner
@@ -17,24 +18,6 @@ except:
 
 
 if __name__ == "__main__":
-    # --------------------------------------------------
-    # Logger init.
-    # --------------------------------------------------
-    log = Logger("rover.log")
-
-    # --------------------------------------------------
-    # Load configuration.
-    # --------------------------------------------------
-    with open("config.json") as cfgf:
-        config = json.load(cfgf)
-
-    # --------------------------------------------------
-    # Prepare WLAN.
-    # --------------------------------------------------
-    wlan = WLAN(config["wifi"]["ssid"],
-                config["wifi"]["password"])
-    wlan.connect()
-
     # --------------------------------------------------
     # Prepare UART to communicate with RTK module.
     # --------------------------------------------------
@@ -143,21 +126,23 @@ if __name__ == "__main__":
                 compass_calibration = False
 
             if micro_nmea.quality not in ["SPS Fix", "RTK Fix", "RTK Float"]:
-                log.info("No RTK fix")
+                logger.info("No RTK fix")
                 mov.move(-1, -1, True)
                 continue
 
             if not rtk_planner.trail_points:
                 mov.move(-1, -1, True)
-                log.info("NO TRAIL")
+                logger.info("NO TRAIL")
                 continue
 
             dist, target_heading, current_heading = nav.calculate_distance_bearing(*rtk_planner.trail_points[0], micro_nmea.lon, micro_nmea.lat)
-            mov.move(current_heading, target_heading, False)
-            log.info("POS", micro_nmea.lon, micro_nmea.lat, "MOVING to: ", rtk_planner.trail_points[0], dist, target_heading, current_heading)
+            print(round(target_heading, 0), round(current_heading, 0), " --- ", round(dist, 0))
+            print(rtk_planner.trail_points)
+            #mov.move(current_heading, target_heading, False)
+            logger.info(f"POS {micro_nmea.lon} {micro_nmea.lat}, MOVING to {rtk_planner.trail_points[0]}, {dist}, {target_heading}, {current_heading}")
             if dist <= target_threshold_cm:
-                log.info(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
+                logger.info(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
                 rtk_planner.trail_points.pop(0)
 
         except Exception as e:
-            log.info(f"Main loop error: {e}")
+            logger.info(f"Main loop error: {e}")
