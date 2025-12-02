@@ -1,6 +1,6 @@
 import json
 import time
-
+from logger import get_logger
 import urequests
 
 
@@ -25,6 +25,7 @@ class RTKPlanner:
         self.url = f"http://{host}:{port}"
         self.mac = mac
         self.trail_points = []
+        self.logger = get_logger()
 
     def register(self):
         while True:
@@ -36,12 +37,12 @@ class RTKPlanner:
                 response_code = response.status_code
                 response.close()
                 if response_code == 200:
-                    print("Rover is registered.")
+                    self.logger.info("Rover is registered.")
                     break
                 else:
-                    print("Rover is NOT registered. Wait for confirmation.")
+                    self.logger.info("Rover is NOT registered. Wait for confirmation.")
             except Exception as e:
-                print(f"Failed to send mac {self.mac}: {e}")
+                self.logger.info(f"Failed to send mac {self.mac}: {e}")
             time.sleep(2)
 
     def get_trails(self):
@@ -54,11 +55,11 @@ class RTKPlanner:
                     mac = data.get('mac')
                     if mac == self.mac:
                         self.trail_points = json.loads(data.get('trail_points').replace("'", "\""))
-                        print(f"Received new trails: {self.trail_points}.")
+                        self.logger.info(f"Received new trails: {self.trail_points}.")
 
             response.close()
         except Exception as e:
-            print("Error getting trails", e)
+            self.logger.info(f"Error getting trails {e}")
 
     def send_gnss_update(self, nmea_data):
         self.gps_data["latitude"] = nmea_data.lat
@@ -77,4 +78,4 @@ class RTKPlanner:
                                       timeout=1)
             response.close()
         except Exception as e:
-            print(f"Failed to send data: {e}")
+            self.logger.info(f"Failed to send data: {e}")

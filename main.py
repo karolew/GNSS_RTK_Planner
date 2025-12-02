@@ -1,10 +1,14 @@
 import json
 import time
-
+from logger import get_logger
 from machine import I2C, Pin, Timer
 
-from boot_main_config import *
-from esp32board import WLAN, Logger
+try:
+    from boot_main_config import *
+except:
+    pass
+
+
 from microNMEA.microNMEA import MicroNMEA
 from navigation import Movement, Navigation
 from ntripclient import NTRIPClient
@@ -18,6 +22,11 @@ except:
 
 
 if __name__ == "__main__":
+    # --------------------------------------------------
+    # Get logger instance.
+    # --------------------------------------------------
+    logger = get_logger()
+
     # --------------------------------------------------
     # Prepare UART to communicate with RTK module.
     # --------------------------------------------------
@@ -116,6 +125,8 @@ if __name__ == "__main__":
             if time.time() - check_updates_s > check_updates_interval_s:
                 rtk_planner.get_trails()
                 check_updates_s = time.time()
+                if not rtk_planner.trail_points:
+                    logger.info("NO TRAIL")
 
             # Navigation part.
             # Calibrate compass if button is pressed.
@@ -125,14 +136,13 @@ if __name__ == "__main__":
                 compass_calibration_led_status.value(0)
                 compass_calibration = False
 
-            if micro_nmea.quality not in ["SPS Fix", "RTK Fix", "RTK Float"]:
-                logger.info("No RTK fix")
-                mov.move(-1, -1, True)
-                continue
+            # if micro_nmea.quality not in ["SPS Fix", "RTK Fix", "RTK Float"]:
+            #     logger.info("No RTK fix")
+            #     mov.move(-1, -1, True)
+            #     continue
 
             if not rtk_planner.trail_points:
                 mov.move(-1, -1, True)
-                logger.info("NO TRAIL")
                 continue
 
             dist, target_heading, current_heading = nav.calculate_distance_bearing(*rtk_planner.trail_points[0], micro_nmea.lon, micro_nmea.lat)

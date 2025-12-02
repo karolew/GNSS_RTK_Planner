@@ -1,5 +1,5 @@
 import socket
-
+from logger import get_logger
 try:
     import ubinascii as ubin
 except:
@@ -14,6 +14,7 @@ class NTRIPClient:
         self.username = username
         self.password = password
         self.socket = None
+        self.logger = get_logger()
 
     def connect(self):
         try:
@@ -43,27 +44,27 @@ class NTRIPClient:
             if "ICY 200 OK" not in response:
                 raise ConnectionError(f"Server responded with: {response}")
 
-            print("Successfully connected to NTRIP server")
+            self.logger.info("Successfully connected to NTRIP server")
             return True
 
         except Exception as e:
-            print(f"Error connecting to NTRIP server: {e}")
+            self.logger.info(f"Error connecting to NTRIP server: {e}")
             if self.socket:
                 self.socket.close()
             return False
 
     def read_data(self, buffer_size=1024):
         if not self.socket:
-            print("Not connected to server")
+            self.logger.info("Not connected to server")
             return
 
         data = None
         try:
             data = self.socket.recv(buffer_size)
         except KeyboardInterrupt:
-            print("\nStopping data collection...")
+            self.logger.info("\nStopping data collection...")
         except Exception as e:
-            print(f"Error reading data: {e}")
+            self.logger.info(f"Error reading data: {e}")
         finally:
             return data
 
@@ -71,4 +72,4 @@ class NTRIPClient:
         if self.socket:
             self.socket.close()
             self.socket = None
-            print("Disconnected from NTRIP server")
+            self.logger.info("Disconnected from NTRIP server")

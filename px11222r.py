@@ -1,5 +1,5 @@
 from machine import UART
-
+from logger import get_logger
 try:
     import ubinascii as ubin
 except:
@@ -11,6 +11,7 @@ class PX1122RUART:
         self.uart = UART(uart_id, baudrate=baud_rate, rxbuf=buffer_size, txbuf=buffer_size)
         self.message_buffer = bytearray()
         self.receiving_message = False
+        self.logger = get_logger()
 
     def send_data(self, data_to_send):
         if data_to_send:
@@ -43,7 +44,7 @@ class PX1122RUART:
                             self.message_buffer = bytearray()
                             self.receiving_message = False
             except Exception as e:
-                print(f"Error processing UART data: {e}")
+                self.logger.info(f"Error processing UART data: {e}")
                 self.message_buffer = bytearray()
                 self.receiving_message = False
         return None
