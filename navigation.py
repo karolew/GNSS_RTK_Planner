@@ -1,5 +1,5 @@
 import sys
-
+from logger import get_logger
 from machine import I2C
 
 from microIMU9v6.imu9v6 import MinIMU9v6
@@ -11,10 +11,11 @@ class Movement:
     def __init__(self, motor_a = (27, 14), motor_b = (12, 13), tolerance_heading = 5) -> None:
         self.tolerance_heading = tolerance_heading
         self.motors = None
+        self.logger = get_logger()
         try:
             self.motors = microMX1508(motor1_pins = motor_a, motor2_pins = motor_b, accel_step=200, max_duty=512)
         except Exception as e:
-            print(f"ERROR Motors not started: {e}")
+            self.logger.info(f"ERROR Motors not started: {e}")
             sys.exit(1)
 
     def _turn_speed(self, abs_diff):
@@ -49,19 +50,19 @@ class Movement:
 
         # If the absolute value is withing acceptable margin, move forward.
         if abs_diff <= self.tolerance_heading:
-            print('forward', actual_h, target_h)
+            self.logger.info('forward', actual_h, target_h)
             self.motors.forward()
             self.motors.update()
             return
 
         # Determine movement direction based on the sign.
         if diff > 0:
-            print('right', actual_h, target_h)
+            self.logger.info('right', actual_h, target_h)
             self.motors.turn_right(self._turn_speed(abs_diff))
             self.motors.update()
 
         else:
-            print('left', actual_h, target_h)
+            self.logger.info('left', actual_h, target_h)
             self.motors.turn_left(self._turn_speed(abs_diff))
             self.motors.update()
 
@@ -69,10 +70,11 @@ class Movement:
 class Navigation:
     def __init__(self, i2c: I2C) -> None:
         self.compass = None
+        self.logger = get_logger()
         try:
             self.compass = MinIMU9v6(i2c, calibrate=False)
         except Exception as e:
-            print(f"ERROR Compass not started: {e}")
+            self.logger.info(f"ERROR Compass not started: {e}")
             sys.exit(1)
 
     def isqrt(self, n):

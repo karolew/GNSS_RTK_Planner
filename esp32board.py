@@ -21,12 +21,13 @@ class WLAN:
         if not self.sta_if.isconnected():
             self.logger.info("Connecting to WiFi...")
             self.sta_if.active(True)
-            self.sta_if.connect(self.ssid, self.password)
+            if not self.sta_if.isconnected():
+                self.sta_if.connect(self.ssid, self.password)
             while not self.sta_if.isconnected():
                 time.sleep(1)
                 if time_attempt + timeout_s < time.time():
                     self.logger.info(f"Unable to connet WiFi network after {timeout_s} [s]. Retry.")
-            self.logger.info("WiFi connected. Network config:", self.sta_if.ifconfig())
+            self.logger.info(f"WiFi connected. Network config: {self.sta_if.ifconfig()}")
         time.sleep(1)
 
     def check(self):
@@ -38,3 +39,14 @@ class WLAN:
             mac_raw = self.sta_if.config("mac")
             mymac = ubin.hexlify(mac_raw).decode()
             return mymac
+
+
+def detect_usb_connected():
+    try:
+        import sys
+        import select
+        poll = select.poll()
+        poll.register(sys.stdin, select.POLLIN)
+        return True
+    except Exception as e:
+        return False

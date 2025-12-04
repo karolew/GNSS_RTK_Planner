@@ -3,14 +3,18 @@ import logger
 
 from machine import Pin
 
-from esp32board import WLAN
+from esp32board import WLAN, detect_usb_connected
 
 
 # --------------------------------------------------
 # Logger init.
 # --------------------------------------------------
 logger = logger.init_logger("rover.log", max_size=20480, use_file=True)
-logger.to_console()
+
+if detect_usb_connected():
+    logger.to_console()
+else:
+    logger.to_file()        # TODO Not working
 
 
 # --------------------------------------------------
@@ -19,7 +23,7 @@ logger.to_console()
 for gpio_no in (12, 13, 14, 27):
     p = Pin(gpio_no, Pin.OUT)
     p.init(pull=Pin.PULL_DOWN)
-    p.on()
+    p.off()
     logger.info(f"Set {gpio_no} to 0")
 
 
@@ -34,8 +38,7 @@ with open("config.json") as cfgf:
 # Prepare WLAN.
 # --------------------------------------------------
 wlan = WLAN(config["wifi"]["ssid"],
-            config["wifi"]["password"],
-            logger)
+            config["wifi"]["password"])
 wlan.connect()
 
 

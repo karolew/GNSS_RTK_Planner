@@ -18,18 +18,18 @@ class Logger:
         line = f"[{self._get_timestamp()}] {message}\n"
 
         if self.use_file:
-            # Add to buffer
+            # Add to buffer.
             self.buf.append(line)
             self.size += len(line)
 
-            # Drop old entries if too big
+            # Drop old entries if too big.
             while self.size > self.max_size and len(self.buf) > 1:
                 old = self.buf.pop(0)
                 self.size -= len(old)
 
-            # Write to file
+            # Write to file.
             try:
-                with open(self.filename, 'w') as f:
+                with open(self.filename, 'a') as f:
                     f.write(''.join(self.buf))
             except:
                 pass

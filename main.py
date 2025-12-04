@@ -132,7 +132,7 @@ if __name__ == "__main__":
             # Calibrate compass if button is pressed.
             if compass_calibration:
                 compass_calibration_led_status.value(1)
-                nav.compass.calibrate_magnetometer()
+                nav.compass.calibrate_magnetometer(duration_s=120)
                 compass_calibration_led_status.value(0)
                 compass_calibration = False
 
@@ -146,10 +146,9 @@ if __name__ == "__main__":
                 continue
 
             dist, target_heading, current_heading = nav.calculate_distance_bearing(*rtk_planner.trail_points[0], micro_nmea.lon, micro_nmea.lat)
-            print(round(target_heading, 0), round(current_heading, 0), " --- ", round(dist, 0))
-            print(rtk_planner.trail_points)
-            #mov.move(current_heading, target_heading, False)
-            logger.info(f"POS {micro_nmea.lon} {micro_nmea.lat}, MOVING to {rtk_planner.trail_points[0]}, {dist}, {target_heading}, {current_heading}")
+            mov.move(current_heading, target_heading, False)
+            #logger.info(f"POS {micro_nmea.lon} {micro_nmea.lat}, MOVING to {rtk_planner.trail_points[0]}, {dist}, {target_heading}, {current_heading}")
+            logger.info(f"{target_heading} {int(current_heading)}")
             if dist <= target_threshold_cm:
                 logger.info(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
                 rtk_planner.trail_points.pop(0)
