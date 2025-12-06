@@ -50,19 +50,19 @@ class Movement:
 
         # If the absolute value is withing acceptable margin, move forward.
         if abs_diff <= self.tolerance_heading:
-            self.logger.info('forward', actual_h, target_h)
+            self.logger.info(f"forward {actual_h} {target_h}")
             self.motors.forward()
             self.motors.update()
             return
 
         # Determine movement direction based on the sign.
         if diff > 0:
-            self.logger.info('right', actual_h, target_h)
+            self.logger.info(f"right {actual_h} {target_h}")
             self.motors.turn_right(self._turn_speed(abs_diff))
             self.motors.update()
 
         else:
-            self.logger.info('left', actual_h, target_h)
+            self.logger.info(f"left {actual_h} {target_h}")
             self.motors.turn_left(self._turn_speed(abs_diff))
             self.motors.update()
 
