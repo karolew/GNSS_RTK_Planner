@@ -19,11 +19,11 @@ class Movement:
             sys.exit(1)
 
     def _turn_speed(self, abs_diff):
-        if self.tolerance_heading < abs_diff <= 20:
+        if self.tolerance_heading < abs_diff <= self.tolerance_heading * 2:
             return 0
-        elif 20 < abs_diff <= 50:
+        elif self.tolerance_heading * 2 < abs_diff <= self.tolerance_heading * 8:
             return 1
-        elif 50 < abs_diff <= 80:
+        elif self.tolerance_heading * 8 < abs_diff <= self.tolerance_heading * 15:
             return 2
         else:
             return 3
