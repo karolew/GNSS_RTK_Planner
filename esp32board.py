@@ -39,14 +39,3 @@ class WLAN:
             mac_raw = self.sta_if.config("mac")
             mymac = ubin.hexlify(mac_raw).decode()
             return mymac
-
-
-def detect_usb_connected():
-    try:
-        import sys
-        import select
-        poll = select.poll()
-        poll.register(sys.stdin, select.POLLIN)
-        return True
-    except Exception as e:
-        return False

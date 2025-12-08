@@ -11,10 +11,8 @@ from esp32board import WLAN, detect_usb_connected
 # --------------------------------------------------
 logger = logger.init_logger("rover.log", max_size=20480, use_file=True)
 
-if detect_usb_connected():
-    logger.to_console()
-else:
-    logger.to_file()        # TODO Not working
+logger.to_console()
+#logger.to_file()
 
 
 # --------------------------------------------------

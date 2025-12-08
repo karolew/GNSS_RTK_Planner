@@ -9,13 +9,8 @@ class Logger:
         self.buf = []
         self.size = 0
 
-    def _get_timestamp(self) -> str:
-        year, month, day, _, hour, minute, second, _ = time.localtime()
-        return ("{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".
-                format(year, month, day, hour, minute, second))
-
     def info(self, message: str) -> None:
-        line = f"[{self._get_timestamp()}] {message}\n"
+        line = f"[{int(time.time())}] {message}\n"
 
         if self.use_file:
             # Add to buffer.
