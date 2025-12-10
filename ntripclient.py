@@ -42,29 +42,27 @@ class NTRIPClient:
             # Check response
             response = self.socket.recv(4096).decode()
             if "ICY 200 OK" not in response:
-                raise ConnectionError(f"Server responded with: {response}")
+                raise ConnectionError(f"NTRIP Server responded with: {response}")
 
-            self.logger.info("Successfully connected to NTRIP server")
+            self.logger.info("NTRIP Successfully connected to server")
             return True
 
         except Exception as e:
-            self.logger.info(f"Error connecting to NTRIP server: {e}")
+            self.logger.info(f"NTRIP Error connecting to server: {e}")
             if self.socket:
                 self.socket.close()
             return False
 
     def read_data(self, buffer_size=1024):
         if not self.socket:
-            self.logger.info("Not connected to server")
+            self.logger.info("NTRIP Not connected to server")
             return
 
         data = None
         try:
             data = self.socket.recv(buffer_size)
-        except KeyboardInterrupt:
-            self.logger.info("\nStopping data collection...")
         except Exception as e:
-            self.logger.info(f"Error reading data: {e}")
+            self.logger.info(f"NTRIP Error reading data: {e}")
         finally:
             return data
 
@@ -72,4 +70,4 @@ class NTRIPClient:
         if self.socket:
             self.socket.close()
             self.socket = None
-            self.logger.info("Disconnected from NTRIP server")
+            self.logger.info("NTRIP Disconnected from server")
