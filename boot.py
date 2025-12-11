@@ -3,7 +3,7 @@ import logger
 
 from machine import Pin
 
-from esp32board import WLAN, detect_usb_connected
+from esp32board import WLAN
 
 
 # --------------------------------------------------
