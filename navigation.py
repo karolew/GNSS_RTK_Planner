@@ -1,7 +1,8 @@
 import sys
-from logger import get_logger
+
 from machine import I2C
 
+from logger import get_logger
 from microIMU9v6.imu9v6 import MinIMU9v6
 from microMX1508.microMX1508 import microMX1508
 from microNMEA.microNMEA import Precise
@@ -13,7 +14,7 @@ class Movement:
         self.motors = None
         self.logger = get_logger()
         try:
-            self.motors = microMX1508(motor1_pins = motor_a, motor2_pins = motor_b, accel_step=200, max_duty=512)
+            self.motors = microMX1508(motor1_pins = motor_a, motor2_pins = motor_b, accel_step=200, max_duty=500)
         except Exception as e:
             self.logger.info(f"ERROR Motors not started: {e}")
             sys.exit(1)
@@ -36,8 +37,8 @@ class Movement:
             return
 
         # Normalize headings to 0-360 range
-        actual_h = current_heading % 360
-        target_h = target_heading % 360
+        actual_h = int(current_heading % 360)
+        target_h = int(target_heading % 360)
         diff = target_h - actual_h
 
         # Normalize the <0 ; 360> range to <-180 ; 180> range.
@@ -56,14 +57,15 @@ class Movement:
             return
 
         # Determine movement direction based on the sign.
+        turn_speed = self._turn_speed(abs_diff)
         if diff > 0:
-            self.logger.info(f"right {actual_h} {target_h}")
-            self.motors.turn_right(self._turn_speed(abs_diff))
+            self.logger.info(f"right {actual_h} {target_h} {turn_speed}")
+            self.motors.turn_right(turn_speed)
             self.motors.update()
 
         else:
-            self.logger.info(f"left {actual_h} {target_h}")
-            self.motors.turn_left(self._turn_speed(abs_diff))
+            self.logger.info(f"left {actual_h} {target_h} {turn_speed}")
+            self.motors.turn_left(turn_speed)
             self.motors.update()
 
 

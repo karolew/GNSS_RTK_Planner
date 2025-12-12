@@ -1,10 +1,9 @@
 import json
-import logger
 
 from machine import Pin
 
+import logger
 from esp32board import WLAN
-
 
 # --------------------------------------------------
 # Logger init.

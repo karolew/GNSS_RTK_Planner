@@ -1,7 +1,9 @@
 import json
 import time
-from logger import get_logger
+
 from machine import I2C, Pin, Timer
+
+from logger import get_logger
 
 try:
     from boot_main_config import *
@@ -147,8 +149,6 @@ if __name__ == "__main__":
 
             dist, target_heading, current_heading = nav.calculate_distance_bearing(*rtk_planner.trail_points[0], micro_nmea.lon, micro_nmea.lat)
             mov.move(current_heading, target_heading, False)
-            #logger.info(f"POS {micro_nmea.lon} {micro_nmea.lat}, MOVING to {rtk_planner.trail_points[0]}, {dist}, {target_heading}, {current_heading}")
-            logger.info(f"{target_heading} {int(current_heading)}")
             if dist <= target_threshold_cm:
                 logger.info(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
                 rtk_planner.trail_points.pop(0)
