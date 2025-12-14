@@ -144,3 +144,19 @@ button {
 .status-valid {
     color: #00AA00;
 }
+
+.gnss-gps {
+    color: #4EDEBF;
+}
+
+.gnss-galileo {
+    color: #469BDB;
+}
+
+.gnss-glonass {
+    color: #466CDB;
+}
+
+.gnss-bds {
+    color: #51D0E0;
+}

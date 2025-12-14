@@ -306,16 +306,24 @@ new EventSource('/rover/get_coords').onmessage = function (event) {
         document.getElementById(data.mac + '-last-update').textContent =
             data.last_update || '-';
 
-        let satUsed = "";
+        let satUsedHTML = "";
         let totalSat = 0;
+
         for (const [gnssSystem, satListAll] of Object.entries(data.su)) {
-            let satUsedList = satListAll.filter(sat => /\w+/.test(sat))
-            satUsed += gnssSystem + "[" + satUsedList + "] "
-            totalSat += satUsedList.length;
+            let satUsedList = satListAll.filter(sat => /\w+/.test(sat));
+            if (satUsedList.length > 0) {
+                satUsedHTML += `<span class="gnss-${gnssSystem.toLowerCase()}">${gnssSystem}[${satUsedList}]</span> `;
+                totalSat += satUsedList.length;
+            }
         }
-        document.getElementById(data.mac + '-su').textContent = (
-            (totalSat > 0) ? `${totalSat} in total. ` + satUsed : 'Unknown'
-        );
+
+        const element = document.getElementById(data.mac + '-su');
+        if (totalSat > 0) {
+            element.innerHTML = `${totalSat} in total. ` + satUsedHTML;
+        } else {
+            element.textContent = 'Unknown';
+        }
+
 
         // Update map marker
         if (data.latitude && data.longitude && data.mac) {
