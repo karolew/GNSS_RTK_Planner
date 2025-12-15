@@ -309,6 +309,10 @@ def register():
 
 #  HTTP polling to update rover with trails. 
 #  Simplest approach for demo purpose. Consider sockets or mqtt.
+#
+#  get_data = the Rover is pulling data every few seconds. Trials are stored in trail_points_for_rover.
+#  upload_trial_to_rover - prepare get riails from database and put into trail_points_for_rover.
+#  stop_rover - send empty trials to the Rover.
 trail_points_for_rover = {"mac": "", "trail_points": ""}
 
 
@@ -325,6 +329,16 @@ def upload_trial_to_rover(rover_id, trail_id):
     else:
         return abort(400, "No trials to send.") 
 
+@app.route("/trail/stop/<int:rover_id>", methods=["POST"])
+def stop_rover(rover_id):
+    global trail_points_for_rover
+    rover_mac = query_db("SELECT mac FROM rover WHERE id = ?", [rover_id], one=True)
+    trail_points_for_rover = dict(rover_mac)
+    trail_points_for_rover.update({"trail_points": "[]"})
+    if rover_mac:
+        return trail_points_for_rover, 200
+    else:
+        return abort(400, f"Rover does not exist {rover_id} {rover_mac}.")
 
 @app.route("/trail/upload", methods=["GET"])
 def get_data():

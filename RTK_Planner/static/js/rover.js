@@ -104,6 +104,7 @@ function renderRoverCard(rover, container, prepend = false) {
                                             </select>
                                             
                                             <button class="button-secondary" onclick="sendTrailToRover(${rover.id})">Send Trail</button>
+                                            <button class="button-secondary" onclick="stopRover(${rover.id})">Stop</button>
 
                                             <p id="selected-trail-${rover.id}"></p>
                                         </div>
@@ -471,6 +472,20 @@ function sendTrailToRover(roverId) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ trail_id: trailId })
+    })
+        .then(() => {
+            console.log(roverId, trailId);
+        });
+}
+
+// Send empty trail list, stop the Rover.
+function stopRover(roverId) {
+    fetch(`/trail/stop/${roverId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rover_id: roverId })
     })
         .then(() => {
             console.log(roverId, trailId);

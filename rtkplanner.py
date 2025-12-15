@@ -51,11 +51,9 @@ class RTKPlanner:
             response = urequests.get(self.url + "/trail/upload")
             if response.status_code == 200:
                 data = response.json()
-                if data.get('trail_points'):
-                    mac = data.get('mac')
-                    if mac == self.mac:
-                        self.trail_points = json.loads(data.get('trail_points').replace("'", "\""))
-                        self.logger.info(f"Received new trails: {self.trail_points}.")
+                if data.get('mac') == self.mac:
+                    self.trail_points = json.loads(data.get('trail_points').replace("'", "\""))
+                    self.logger.info(f"Received new trails: {self.trail_points}.")
 
             response.close()
         except Exception as e:
