@@ -47,6 +47,10 @@ button {
     background-color: #555;
 }
 
+.button-stop {
+    background-color: #c44336;
+}
+
 .button-danger {
     background-color: #f44336;
 }

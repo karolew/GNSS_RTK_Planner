@@ -91,7 +91,7 @@ function renderRoverCard(rover, container, prepend = false) {
                                             <tr>
                                                 <td><strong>Speed:</strong> <span id="${rover.mac}-speed">-</span></td>
                                                 <td><strong>Course:</strong> <span id="${rover.mac}-course">-</span></td>
-                                                <td><strong>GPS Time:</strong> <span id="${rover.mac}-gps-time">-</span></td>
+                                                <td><strong>GNSS Time:</strong> <span id="${rover.mac}-gps-time">-</span></td>
                                                 <td><strong>Last Update:</strong> <span id="${rover.mac}-last-update">-</span></td>
                                             </tr>
                                         </table>
@@ -104,7 +104,7 @@ function renderRoverCard(rover, container, prepend = false) {
                                             </select>
                                             
                                             <button class="button-secondary" onclick="sendTrailToRover(${rover.id})">Send Trail</button>
-                                            <button class="button-secondary" onclick="stopRover(${rover.id})">Stop</button>
+                                            <button class="button-stop" onclick="stopRover(${rover.id})">Stop</button>
 
                                             <p id="selected-trail-${rover.id}"></p>
                                         </div>
@@ -488,6 +488,6 @@ function stopRover(roverId) {
         body: JSON.stringify({ rover_id: roverId })
     })
         .then(() => {
-            console.log(roverId, trailId);
+            console.log(roverId);
         });
 }
