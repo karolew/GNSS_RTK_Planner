@@ -138,17 +138,18 @@ if __name__ == "__main__":
                 compass_calibration_led_status.value(0)
                 compass_calibration = False
 
-            # if micro_nmea.quality not in ["SPS Fix", "RTK Fix", "RTK Float"]:
-            #     logger.info("No RTK fix")
-            #     mov.move(-1, -1, True)
-            #     continue
+            if micro_nmea.quality not in ["SPS Fix", "RTK Fix", "RTK Float"]:
+                logger.info("No RTK fix")
+                mov.move(-1, -1, True)
+                continue
 
             if not rtk_planner.trail_points:
                 mov.move(-1, -1, True)
                 continue
 
-            dist, target_heading, current_heading = nav.calculate_distance_bearing(*rtk_planner.trail_points[0], micro_nmea.lon, micro_nmea.lat)
+            dist, target_heading, current_heading = nav.calculate_distance_bearing(micro_nmea.lon, micro_nmea.lat, *rtk_planner.trail_points[0])
             mov.move(current_heading, target_heading, False)
+            logger.info(f"POS (current, target): ({micro_nmea.lon, micro_nmea.lat}, {rtk_planner.trail_points[0]})")
             if dist <= target_threshold_cm:
                 logger.info(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
                 rtk_planner.trail_points.pop(0)

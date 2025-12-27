@@ -195,8 +195,8 @@ class Navigation:
         """
         Calculate distance (cm) and bearing (degrees * 100) between two GNSS points.
         Integer-only math for ESP32 speed, avoids overflow.
-        lat1_str, lon1_str: Point A coordinates as strings (e.g., "49.951389")
-        lat2_str, lon2_str: Point B coordinates as strings (e.g., "49.951391")
+        lat1_str, lon1_str: Point A coordinates as strings (e.g. '19.411551123387607', '51.70590960868671')
+        lat2_str, lon2_str: Point B coordinates as strings (e.g. '19.411551123388000', '51.70590960868700')
         Returns:
             tuple: (distance_cm, bearing_deg_x100, heading_deg)
                    distance_cm: distance in centimeters
