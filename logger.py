@@ -5,8 +5,9 @@ import time
 class Logger:
     """
     This logger uses 2 files each with the max_size.
-    Logger is toggling between these 2 files, and overwrite it each time.
-    The max_size is approximate value, loger do not care about the precise size of file but is faster.
+    The logger is toggling between these 2 files, and overwrite them each time.
+    The max_size of file is approximate value. The logger does not care
+    about the precise size of file but is faster.
     """
     def __init__(self, filename="log.txt", max_size=10240, use_file=True):
         self._filename1 = "1" + filename
@@ -53,14 +54,16 @@ class Logger:
 # This can be used in multiple modules.
 logger = None
 
-def init_logger(filename="og.txt", max_size=10240, use_file=True):
-    """Initialize global logger."""
+def init_logger(filename="log.txt", max_size=10240, use_file=True):
+    """
+    Initialize global logger."""
     global logger
     logger = Logger(filename, max_size, use_file)
     return logger
 
 def get_logger():
-    """Get the global logger instance."""
+    """
+    Get the global logger instance."""
     global logger
     if logger is None:
         logger = Logger()

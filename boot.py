@@ -8,7 +8,7 @@ from esp32board import WLAN
 # --------------------------------------------------
 # Logger init.
 # --------------------------------------------------
-logger = logger.init_logger("rover.log", max_size=20480, use_file=True)
+logger = logger.init_logger("rover.log", max_size=100000, use_file=True)
 
 #logger.to_console()
 logger.to_file()

@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
             dist, target_heading, current_heading = nav.calculate_distance_bearing(micro_nmea.lon, micro_nmea.lat, *rtk_planner.trail_points[0])
             mov.move(current_heading, target_heading, False)
-            logger.info(f"POS (current, target): ({micro_nmea.lon, micro_nmea.lat}, {rtk_planner.trail_points[0]})")
+            logger.info(f"POS (current, target): ({micro_nmea.lon, micro_nmea.lat}, {rtk_planner.trail_points[0]}) Distance: {dist}")
             if dist <= target_threshold_cm:
                 logger.info(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
                 rtk_planner.trail_points.pop(0)
