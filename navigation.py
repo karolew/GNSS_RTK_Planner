@@ -191,26 +191,26 @@ class Navigation:
         microdeg = int(integer_part) * 1000000 + sign * int(decimal_part)
         return microdeg
 
-    def calculate_distance_bearing(self, lat1_str, lon1_str, lat2_str, lon2_str):
+    def calculate_distance_bearing(self, lon1_str, lat1_str, lon2_str, lat2_str):
         """
         Calculate distance (cm) and bearing (degrees * 100) between two GNSS points.
         Integer-only math for ESP32 speed, avoids overflow.
-        lat1_str, lon1_str: Point A coordinates as strings (e.g. '19.411551123387607', '51.70590960868671')
-        lat2_str, lon2_str: Point B coordinates as strings (e.g. '19.411551123388000', '51.70590960868700')
+        lon1_str, lat1_str: Point A coordinates as strings (e.g. '19.411551123387607', '51.70590960868671')
+        lon2_str, lat2_str: Point B coordinates as strings (e.g. '19.411551123388000', '51.70590960868700')
         Returns:
             tuple: (distance_cm, bearing_deg_x100, heading_deg)
                    distance_cm: distance in centimeters
                    bearing_deg_x100: bearing * 100 (e.g., 1700 = 17.00°)
         """
         # Convert string coordinates to integers (microdegrees: degrees * 1,000,000)
-        lat1 = self.str_to_microdegrees(lat1_str)
         lon1 = self.str_to_microdegrees(lon1_str)
-        lat2 = self.str_to_microdegrees(lat2_str)
+        lat1 = self.str_to_microdegrees(lat1_str)
         lon2 = self.str_to_microdegrees(lon2_str)
+        lat2 = self.str_to_microdegrees(lat2_str)
 
         # Calculate differences in microdegrees
-        dlat = lat2 - lat1
         dlon = lon2 - lon1
+        dlat = lat2 - lat1
 
         # Average latitude for longitude correction
         lat_avg = (lat1 + lat2) // 2
@@ -227,11 +227,10 @@ class Navigation:
         # 1 microdegree = 111.32 mm
         # Split the constant: 111.32 = 11132 / 100
 
-        # y (north-south) in millimeters
-        # Avoid overflow: (dlat * 11132) might overflow, so divide first
+        # y (north-south) in millimeters - uses LATITUDE difference
         y_mm = (dlat * 1113) // 10  # dlat * 111.3
 
-        # x (east-west) in millimeters, corrected for latitude
+        # x (east-west) in millimeters, corrected for latitude - uses LONGITUDE difference
         # x = dlon * cos(lat) * 111.32
         # cos_lat is * 10000, so divide by 10000
         # To avoid overflow: (dlon * cos_lat) might overflow
