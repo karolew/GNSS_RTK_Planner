@@ -9,9 +9,12 @@ from microNMEA.microNMEA import Precise
 
 
 class Movement:
-    def __init__(self, motor_a = (27, 14), motor_b = (12, 13), tolerance_heading = 5) -> None:
+    def __init__(self, motor_a = (27, 14), motor_b = (12, 13),
+                 tolerance_heading = 5, debug_print: bool = True) -> None:
         self.tolerance_heading = tolerance_heading
         self.motors = None
+        self.status = "S"   # S - Stop, L = Left, R - Right,F - Forward
+        self.debug_print = debug_print
         self.logger = get_logger()
         try:
             self.motors = microMX1508(motor1_pins = motor_a, motor2_pins = motor_b, accel_step=200, max_duty=500)
@@ -32,6 +35,7 @@ class Movement:
     def move(self, current_heading, target_heading, stop):
         # Stop moving.
         if stop:
+            self.status = "S"
             self.motors.stop()
             self.motors.update()
             return
@@ -51,7 +55,9 @@ class Movement:
 
         # If the absolute value is withing acceptable margin, move forward.
         if abs_diff <= self.tolerance_heading:
-            self.logger.info(f"forward {actual_h} {target_h}")
+            if self.debug_print:
+                self.logger.info(f"forward {actual_h} {target_h}")
+            self.status = "F"
             self.motors.forward()
             self.motors.update()
             return
@@ -59,12 +65,16 @@ class Movement:
         # Determine movement direction based on the sign.
         turn_speed = self._turn_speed(abs_diff)
         if diff > 0:
-            self.logger.info(f"right {actual_h} {target_h} {turn_speed}")
+            if self.debug_print:
+                self.logger.info(f"right {actual_h} {target_h} {turn_speed}")
+            self.status = "R"
             self.motors.turn_right(turn_speed)
             self.motors.update()
 
         else:
-            self.logger.info(f"left {actual_h} {target_h} {turn_speed}")
+            if self.debug_print:
+                self.logger.info(f"left {actual_h} {target_h} {turn_speed}")
+            self.status = "L"
             self.motors.turn_left(turn_speed)
             self.motors.update()
 
