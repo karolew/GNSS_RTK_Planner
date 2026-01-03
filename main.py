@@ -54,7 +54,7 @@ if __name__ == "__main__":
     # --------------------------------------------------
 
     # Button and led status for compass calibration.
-    timer = Timer(0)
+    compass_calibration_timer = Timer(1)
     compass_calibration = False
     compass_long_press_ms = 2000
     compass_calibration_led_status = Pin(23, Pin.OUT)
@@ -67,9 +67,11 @@ if __name__ == "__main__":
 
     def handle_interrupt_for_compass_calibration(pin) -> None:
         if pin.value() == 0:
-            timer.init(period=compass_long_press_ms, mode=Timer.ONE_SHOT, callback=compass_on_long_press)
+            compass_calibration_timer.init(period=compass_long_press_ms,
+                                           mode=Timer.ONE_SHOT,
+                                           callback=compass_on_long_press)
         else:
-            timer.deinit()
+            compass_calibration_timer.deinit()
     compass_calibration_button.irq(trigger=Pin.IRQ_FALLING, handler=handle_interrupt_for_compass_calibration)
 
     # Compass and driving motors.

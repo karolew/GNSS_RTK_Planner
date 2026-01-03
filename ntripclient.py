@@ -1,5 +1,8 @@
 import socket
+
+from esp32board import error_indicator_led
 from logger import get_logger
+
 try:
     import ubinascii as ubin
 except:
@@ -14,6 +17,7 @@ class NTRIPClient:
         self.username = username
         self.password = password
         self.socket = None
+        self.ntrip_failures_counter = 0
         self.logger = get_logger()
 
     def connect(self):
@@ -59,9 +63,15 @@ class NTRIPClient:
             return
 
         data = None
+
         try:
             data = self.socket.recv(buffer_size)
+            self.ntrip_failures_counter = 0
+            error_indicator_led.stop_blinking()
         except Exception as e:
+            self.ntrip_failures_counter += 1
+            if self.ntrip_failures_counter > 10:
+                error_indicator_led.start_blinking()
             self.logger.info(f"NTRIP Error reading data: {e}")
         finally:
             return data
