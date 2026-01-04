@@ -1,7 +1,10 @@
 import json
 import time
-from logger import get_logger
+
 import urequests
+
+from esp32board import error_indicator_led
+from logger import get_logger
 
 
 class RTKPlanner:
@@ -28,6 +31,7 @@ class RTKPlanner:
         self.logger = get_logger()
 
     def register(self):
+        error_indicator_led.start_blinking()
         while True:
             try:
                 response = urequests.post(self.url + "/rover/register",
@@ -41,6 +45,7 @@ class RTKPlanner:
                     break
                 else:
                     self.logger.info("Rover is NOT registered. Wait for confirmation.")
+                error_indicator_led.stop_blinking()
             except Exception as e:
                 self.logger.info(f"Failed to send mac {self.mac}: {e}")
             time.sleep(2)
