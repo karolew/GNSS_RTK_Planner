@@ -14,7 +14,7 @@ except:
 from microNMEA.microNMEA import MicroNMEA
 from navigation import Movement, Navigation
 from ntripclient import NTRIPClient
-from px11222r import PX1122RUART
+from px1122r import PX1122RUART
 from rtkplanner import RTKPlanner
 
 try:
