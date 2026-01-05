@@ -310,14 +310,14 @@ def register():
 #  HTTP polling to update rover with trails. 
 #  Simplest approach for demo purpose. Consider sockets or mqtt.
 #
-#  get_data = the Rover is pulling data every few seconds. Trials are stored in trail_points_for_rover.
-#  upload_trial_to_rover - prepare get riails from database and put into trail_points_for_rover.
-#  stop_rover - send empty trials to the Rover.
+#  get_data = the Rover is pulling data every few seconds. trails are stored in trail_points_for_rover.
+#  upload_trail_to_rover - prepare get trails from database and put into trail_points_for_rover.
+#  stop_rover - send empty trails to the Rover.
 trail_points_for_rover = {"mac": "", "trail_points": ""}
 
 
 @app.route("/trail/upload/<int:rover_id>/<int:trail_id>", methods=["POST"])
-def upload_trial_to_rover(rover_id, trail_id):
+def upload_trail_to_rover(rover_id, trail_id):
     global trail_points_for_rover
     rover_mac = query_db("SELECT mac FROM rover WHERE id = ?", [rover_id], one=True)
     trail_points = query_db("SELECT trail_points FROM trail WHERE id = ?", [trail_id], one=True)
@@ -327,7 +327,7 @@ def upload_trial_to_rover(rover_id, trail_id):
     if trail_points_for_rover["mac"] and trail_points_dict["trail_points"]:
         return trail_points_for_rover, 200
     else:
-        return abort(400, "No trials to send.") 
+        return abort(400, "No trails to send.")
 
 @app.route("/trail/stop/<int:rover_id>", methods=["POST"])
 def stop_rover(rover_id):

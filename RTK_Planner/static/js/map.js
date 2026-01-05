@@ -126,9 +126,9 @@ function addInteraction() {
 }
 
 // Handle draw event
-const trailName = document.getElementById("trial-name");
-const trailSaveButton = document.getElementById("trial-save-button");
-const trailDeleteButton = document.getElementById("trial-delete-button");
+const trailName = document.getElementById("trail-name");
+const trailSaveButton = document.getElementById("trail-save-button");
+const trailDeleteButton = document.getElementById("trail-delete-button");
 const trailConsole = document.getElementById("trail-console");
 const trailAllDropdown = document.getElementById("all-trails-dropdown");
 
@@ -208,7 +208,7 @@ trailSaveButton.addEventListener("click", function () {
             });
         }
 
-        // Remove feature to avoid adding coordinates second time in another trial.
+        // Remove feature to avoid adding coordinates second time in another trail.
         sourceDrawVector.removeFeature(feature);
     });
     if (points.length > 0) {

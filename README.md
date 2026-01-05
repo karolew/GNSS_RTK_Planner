@@ -10,7 +10,7 @@ It consists of 2 main components:
 
 This is a micropython implementation of GNSS RTK Rover based on ESP32 main board, PX1122R GNSS RTK receiver and electronic compass IMU9.
 The rover requires an internet access to get correction data from NTRIP server, receive target trail and send GNSS coordinates 
-to RTK Planner server. To get correct rover heading it uses electronic compass. When trial is received the rover execute it only when the GNSS 
+to RTK Planner server. To get correct rover heading it uses electronic compass. When trail is received the rover execute it only when the GNSS 
 quality is a RTK Fix.
 
 ### Configuration File
@@ -64,11 +64,11 @@ Repeat this procedure every time the position of electronic components change, o
 ![alt text](schematic.png)
 
 ## RTK Planner
-This is a web service used to manage RTK Rovers and trials. A trail is a collection of GNSS points, created by drawing desired path on the map. The RTK Planner provides following functionalities:
+This is a web service used to manage RTK Rovers and trails. A trail is a collection of GNSS points, created by drawing desired path on the map. The RTK Planner provides following functionalities:
 * manage rover (add, update, delete)
-* manage trial (add, delete)
-* send trial to rover
-* stop trial execution on rover
+* manage trail (add, delete)
+* send trail to rover
+* stop trail execution on rover
 * monitor rover position on map
 * control one or more rovers
 
