@@ -19,7 +19,7 @@ app = Flask(__name__)
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DATABASE)
-        g.db.row_factory = sqlite3.Row    # DB cursor returns dict instead of tuple.
+        g.db.row_factory = sqlite3.Row  # DB cursor returns dict instead of tuple.
     return g.db
 
 
@@ -71,10 +71,10 @@ def create_rover():
     mac = data.get("mac")
     status = data.get("status", "inactive")
     last_active = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
     if not name or not mac:
         return jsonify({"error": "Name and MAC address are required"}), 400
-    
+
     try:
         conn = get_db()
         cursor = conn.cursor()
@@ -84,7 +84,7 @@ def create_rover():
         )
         rover_id = cursor.lastrowid
         conn.commit()
-        
+
         # Get the newly created rover
         rover = query_db("SELECT * FROM rover WHERE id = ?", [rover_id], one=True)
         return jsonify(dict(rover))
@@ -105,16 +105,16 @@ def update_rover(rover_id):
     data = request.json
     name = data.get("name")
     mac = data.get("mac")
-    
+
     if not name or not mac:
         return jsonify({"error": "Name and MAC address are required"}), 400
-    
+
     try:
         modify_db(
             "UPDATE rover SET name = ?, mac = ? WHERE id = ?",
             (name, mac, rover_id)
         )
-        
+
         # Get the updated rover
         rover = query_db("SELECT * FROM rover WHERE id = ?", [rover_id], one=True)
         if rover is None:
@@ -146,22 +146,25 @@ def get_trails():
 def create_trail():
     data = request.json
     name = data.get("name")
-    trail_points = str(data.get("trail_points"))
-    
+    trail_points = data.get("trail_points")
+
     if not name or not trail_points:
         return jsonify({"error": "Name and trail points are required"}), 400
-    
+
     try:
+        # Convert trail_points to proper JSON string
+        trail_points_json = json.dumps(trail_points)
+
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO trail (name, trail_points) VALUES (?, ?)",
-            (name, trail_points)
+            (name, trail_points_json)
         )
         trail_id = cursor.lastrowid
         conn.commit()
-        
-        # Get the newly created rover
+
+        # Get the newly created trail
         trail = query_db("SELECT * FROM trail WHERE id = ?", [trail_id], one=True)
         return jsonify(dict(trail))
     except Exception as e:
@@ -197,20 +200,20 @@ def get_rover_trails(rover_id):
 def add_trail_to_rover(rover_id):
     data = request.json
     trail_id = data.get("trail_id")
-    
+
     if not trail_id:
         return jsonify({"error": "Trail ID is required"}), 400
-    
+
     # Check if the association already exists
     existing = query_db(
         "SELECT 1 FROM rover_trail WHERE rover_id = ? AND trail_id = ?",
         [rover_id, trail_id],
         one=True
     )
-    
+
     if existing:
         return jsonify({"error": "Trail is already associated with this rover"}), 400
-    
+
     try:
         modify_db(
             "INSERT INTO rover_trail (rover_id, trail_id) VALUES (?, ?)",
@@ -256,6 +259,7 @@ def get_coords():
             # Get data from the queue and send
             data = rover_data_queue.get()
             yield f"data: {json.dumps(data)}\n\n"
+
     return Response(event_stream(), mimetype="text/event-stream")
 
 
@@ -307,7 +311,7 @@ def register():
         return abort(406, "Rover not registered.")
 
 
-#  HTTP polling to update rover with trails. 
+#  HTTP polling to update rover with trails.
 #  Simplest approach for demo purpose. Consider sockets or mqtt.
 #
 #  get_data = the Rover is pulling data every few seconds. trails are stored in trail_points_for_rover.
@@ -329,6 +333,7 @@ def upload_trail_to_rover(rover_id, trail_id):
     else:
         return abort(400, "No trails to send.")
 
+
 @app.route("/trail/stop/<int:rover_id>", methods=["POST"])
 def stop_rover(rover_id):
     global trail_points_for_rover
@@ -339,6 +344,7 @@ def stop_rover(rover_id):
         return trail_points_for_rover, 200
     else:
         return abort(400, f"Rover does not exist {rover_id} {rover_mac}.")
+
 
 @app.route("/trail/upload", methods=["GET"])
 def get_data():
@@ -379,7 +385,7 @@ if __name__ == "__main__":
         FOREIGN KEY (rover_id) REFERENCES rover(id) ON DELETE CASCADE,
         FOREIGN KEY (trail_id) REFERENCES trail(id) ON DELETE CASCADE
     );
-    
+
     -- Insert some sample
     INSERT OR IGNORE INTO rover (id, name, mac, status, last_active) VALUES
         (1, "Rover1", "a8032a56ae8c", "Inactive", "2025-01-01 22:22:22.22");

@@ -26,6 +26,31 @@ const vectorDrawLayer = new ol.layer.Vector({
     source: sourceDrawVector,
 });
 
+// Create a separate source and layer for displaying loaded trails
+const sourceLoadedTrail = new ol.source.Vector({ wrapX: false });
+const vectorLoadedTrailLayer = new ol.layer.Vector({
+    source: sourceLoadedTrail,
+    style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+            color: '#FF6B00',
+            width: 3
+        }),
+        fill: new ol.style.Fill({
+            color: 'rgba(255, 107, 0, 0.1)'
+        }),
+        image: new ol.style.Circle({
+            radius: 6,
+            fill: new ol.style.Fill({
+                color: '#FF6B00'
+            }),
+            stroke: new ol.style.Stroke({
+                color: '#fff',
+                width: 2
+            })
+        })
+    })
+});
+
 const vectorSource = new ol.source.Vector();
 const vectorLayer = new ol.layer.Vector({
     source: vectorSource,
@@ -65,7 +90,7 @@ Define Map
 */
 const map = new ol.Map({
     target: 'map',
-    layers: [OSMLayer, satelliteLayer, hybridLabelsLayer, vectorDrawLayer, vectorLayer],
+    layers: [OSMLayer, satelliteLayer, hybridLabelsLayer, vectorDrawLayer, vectorLoadedTrailLayer, vectorLayer],
     view: new ol.View({
         center: ol.proj.fromLonLat([0, 0]),
         zoom: 3,
@@ -169,6 +194,79 @@ function loadTrailsForDropdown() {
         });
 }
 
+// Function to load and display a trail on the map
+function loadTrailOnMap(trailId) {
+    // Clear the loaded trail layer
+    sourceLoadedTrail.clear();
+
+    if (!trailId) {
+        // If no trail selected, just clear and return
+        return;
+    }
+
+    // Fetch the trail data
+    fetch(`/api/trails`)
+        .then(response => response.json())
+        .then(trails => {
+            const trail = trails.find(t => t.id == trailId);
+            if (!trail || !trail.trail_points) {
+                console.error('Trail not found or has no points');
+                return;
+            }
+
+            // Parse the trail points
+            let points;
+            try {
+                // Replace single quotes with double quotes to make it valid JSON
+                const validJson = trail.trail_points.replace(/'/g, '"');
+                points = JSON.parse(validJson);
+            } catch (e) {
+                console.error('Error parsing trail points:', e);
+                console.error('Trail points value:', trail.trail_points);
+                return;
+            }
+
+            if (!Array.isArray(points) || points.length === 0) {
+                console.error('Invalid trail points format');
+                return;
+            }
+
+            // Convert points to map coordinates
+            const coordinates = points.map(point => {
+                // Points are stored as [longitude, latitude] in decimal degrees
+                const lon = parseFloat(point[0]);
+                const lat = parseFloat(point[1]);
+                return ol.proj.fromLonLat([lon, lat]);
+            });
+
+            // Create feature based on number of points
+            let feature;
+            if (coordinates.length === 1) {
+                // Single point
+                feature = new ol.Feature({
+                    geometry: new ol.geom.Point(coordinates[0])
+                });
+            } else {
+                // Multiple points - create a LineString
+                feature = new ol.Feature({
+                    geometry: new ol.geom.LineString(coordinates)
+                });
+            }
+
+            // Add feature to the loaded trail layer
+            sourceLoadedTrail.addFeature(feature);
+        })
+        .catch(error => {
+            console.error('Error loading trail:', error);
+        });
+}
+
+// Add event listener for trail dropdown selection
+trailAllDropdown.addEventListener('change', function() {
+    const selectedTrailId = this.value;
+    loadTrailOnMap(selectedTrailId);
+});
+
 drawTypeSelect.onchange = function (e) {
     map.removeInteraction(draw);
     addInteraction();
@@ -254,6 +352,8 @@ trailDeleteButton.addEventListener("click", function () {
                     throw new Error('Failed to delete trail');
                 }
                 loadTrailsForDropdown();
+                // Clear the map when trail is deleted
+                sourceLoadedTrail.clear();
                 trailConsole.style.color = '#e88740';
                 trailConsole.innerHTML = "Trail " + selectedTrailName + " has been deleted."
                 return response.json();
