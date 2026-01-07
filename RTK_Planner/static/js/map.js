@@ -24,31 +24,120 @@ const hybridLabelsLayer = new ol.layer.Tile({
 const sourceDrawVector = new ol.source.Vector({ wrapX: false });
 const vectorDrawLayer = new ol.layer.Vector({
     source: sourceDrawVector,
+    style: function(feature) {
+        const geometry = feature.getGeometry();
+        if (geometry.getType() === 'LineString') {
+            return createLineStyleWithLabels(geometry, '#3399CC');
+        } else {
+            // Point style
+            return new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 6,
+                    fill: new ol.style.Fill({
+                        color: '#3399CC'
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: '#fff',
+                        width: 2
+                    })
+                })
+            });
+        }
+    }
 });
+
+// Function to calculate distance between two coordinates in centimeters
+function calculateDistance(coord1, coord2) {
+    // Convert from map projection to lon/lat
+    const lonLat1 = ol.proj.toLonLat(coord1);
+    const lonLat2 = ol.proj.toLonLat(coord2);
+
+    // Calculate distance using Haversine formula
+    const R = 6378137; // Earth's radius in meters
+    const lat1 = lonLat1[1] * Math.PI / 180;
+    const lat2 = lonLat2[1] * Math.PI / 180;
+    const deltaLat = (lonLat2[1] - lonLat1[1]) * Math.PI / 180;
+    const deltaLon = (lonLat2[0] - lonLat1[0]) * Math.PI / 180;
+
+    const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+              Math.cos(lat1) * Math.cos(lat2) *
+              Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    const distanceMeters = R * c;
+    // Convert to centimeters
+    return distanceMeters * 100;
+}
+
+// Function to create style with distance labels for line segments
+function createLineStyleWithLabels(geometry, color = '#FF6B00') {
+    const styles = [
+        new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: color,
+                width: 3
+            })
+        })
+    ];
+
+    if (geometry.getType() === 'LineString') {
+        const coordinates = geometry.getCoordinates();
+
+        // Add distance label for each segment
+        for (let i = 0; i < coordinates.length - 1; i++) {
+            const start = coordinates[i];
+            const end = coordinates[i + 1];
+            const midpoint = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
+            const distance = calculateDistance(start, end);
+
+            styles.push(new ol.style.Style({
+                geometry: new ol.geom.Point(midpoint),
+                text: new ol.style.Text({
+                    text: distance.toFixed(2) + ' cm',
+                    font: '12px sans-serif',
+                    fill: new ol.style.Fill({
+                        color: '#000'
+                    }),
+                    backgroundFill: new ol.style.Fill({
+                        color: 'rgba(255, 255, 255, 0.8)'
+                    }),
+                    padding: [2, 4, 2, 4],
+                    stroke: new ol.style.Stroke({
+                        color: '#fff',
+                        width: 2
+                    })
+                })
+            }));
+        }
+    }
+
+    return styles;
+}
 
 // Create a separate source and layer for displaying loaded trails
 const sourceLoadedTrail = new ol.source.Vector({ wrapX: false });
 const vectorLoadedTrailLayer = new ol.layer.Vector({
     source: sourceLoadedTrail,
-    style: new ol.style.Style({
-        stroke: new ol.style.Stroke({
-            color: '#FF6B00',
-            width: 3
-        }),
-        fill: new ol.style.Fill({
-            color: 'rgba(255, 107, 0, 0.1)'
-        }),
-        image: new ol.style.Circle({
-            radius: 6,
-            fill: new ol.style.Fill({
-                color: '#FF6B00'
-            }),
-            stroke: new ol.style.Stroke({
-                color: '#fff',
-                width: 2
-            })
-        })
-    })
+    style: function(feature) {
+        const geometry = feature.getGeometry();
+        if (geometry.getType() === 'LineString') {
+            return createLineStyleWithLabels(geometry, '#FF6B00');
+        } else {
+            // Point style
+            return new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 6,
+                    fill: new ol.style.Fill({
+                        color: '#FF6B00'
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: '#fff',
+                        width: 2
+                    })
+                })
+            });
+        }
+    }
 });
 
 const vectorSource = new ol.source.Vector();
