@@ -227,6 +227,26 @@ function switchLayer(layerType) {
 // Draw Methods
 const drawTypeSelect = document.getElementById('draw-type');
 
+// Create overlay for cursor distance label
+const cursorDistanceElement = document.createElement('div');
+cursorDistanceElement.className = 'cursor-distance-label';
+cursorDistanceElement.style.cssText = `
+    position: absolute;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    pointer-events: none;
+    display: none;
+    z-index: 1000;
+    border: 1px solid #333;
+`;
+document.body.appendChild(cursorDistanceElement);
+
+let lastDrawPoint = null;
+let isDrawing = false;
+
 let draw; // global so we can remove it later
 function addInteraction() {
     const value = drawTypeSelect.value;
@@ -235,9 +255,81 @@ function addInteraction() {
             source: sourceDrawVector,
             type: drawTypeSelect.value,
         });
+
+        // Track when drawing starts
+        draw.on('drawstart', function(evt) {
+            isDrawing = true;
+            lastDrawPoint = null;
+            cursorDistanceElement.style.display = 'block';
+            cursorDistanceElement.textContent = '0.00 cm';
+        });
+
+        // Track when drawing ends
+        draw.on('drawend', function(evt) {
+            isDrawing = false;
+            lastDrawPoint = null;
+            cursorDistanceElement.style.display = 'none';
+        });
+
         map.addInteraction(draw);
+    } else {
+        // Hide label when draw mode is None
+        cursorDistanceElement.style.display = 'none';
+        isDrawing = false;
+        lastDrawPoint = null;
     }
 }
+
+// Handle mouse move on map to update cursor distance
+map.on('pointermove', function(evt) {
+    if (!isDrawing) {
+        return;
+    }
+
+    const drawType = drawTypeSelect.value;
+    if (drawType !== 'Point' && drawType !== 'LineString') {
+        return;
+    }
+
+    // Update label position to follow cursor
+    cursorDistanceElement.style.left = (evt.pixel[0] + 15) + 'px';
+    cursorDistanceElement.style.top = (evt.pixel[1] - 15) + 'px';
+
+    // Get the sketch feature being drawn
+    const features = sourceDrawVector.getFeatures();
+    if (features.length > 0) {
+        const sketch = features[features.length - 1];
+        const geometry = sketch.getGeometry();
+
+        if (geometry.getType() === 'LineString') {
+            const coordinates = geometry.getCoordinates();
+            if (coordinates.length > 0) {
+                lastDrawPoint = coordinates[coordinates.length - 1];
+            }
+        } else if (geometry.getType() === 'Point') {
+            // For point drawing, there's no previous point until first click
+            lastDrawPoint = null;
+        }
+    }
+
+    // Calculate distance from last point to current cursor position
+    let distance = 0;
+    if (lastDrawPoint) {
+        distance = calculateDistance(lastDrawPoint, evt.coordinate);
+    }
+
+    cursorDistanceElement.textContent = distance.toFixed(2) + ' cm';
+});
+
+// Handle click to update last point
+map.on('click', function(evt) {
+    if (isDrawing) {
+        const drawType = drawTypeSelect.value;
+        if (drawType === 'Point' || drawType === 'LineString') {
+            lastDrawPoint = evt.coordinate;
+        }
+    }
+});
 
 // Handle draw event
 const trailName = document.getElementById("trail-name");
