@@ -99,10 +99,13 @@ function renderRoverCard(rover, container, prepend = false) {
 
                                         <div class="trail-selector">
                                             <label><strong>Associated Trails:</strong></label>
+
                                             <select id="trail-dropdown-${rover.id}" onchange="displaySelectedTrail(${rover.id})">
                                                 <option value="">Select a trail</option>
                                             </select>
-                                            
+
+                                            <input type="text" style="width: 40px;height: 20px;" id="precision-${rover.id}" value="50">
+
                                             <button class="button-secondary" onclick="sendTrailToRover(${rover.id})">Send Trail</button>
                                             <button class="button-stop" onclick="stopRover(${rover.id})">Stop</button>
 
@@ -460,13 +463,15 @@ function deleteRover(roverId) {
 function sendTrailToRover(roverId) {
     const trailListContainer = document.getElementById(`trail-dropdown-${roverId}`);
     const trailId = trailListContainer.value;
+    const precisionContainer = document.getElementById(`precision-${roverId}`);
+    const precision = precisionContainer.value;
 
     if (!trailId) {
         alert('Please select a trail to send');
         return;
     }
 
-    fetch(`/trail/upload/${roverId}/${trailId}`, {
+    fetch(`/trail/upload/${roverId}/${trailId}/${precision}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

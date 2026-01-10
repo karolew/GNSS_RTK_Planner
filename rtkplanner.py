@@ -27,6 +27,7 @@ class RTKPlanner:
     def __init__(self, host: str, port: str, mac):
         self.url = f"http://{host}:{port}"
         self.mac = mac
+        self.target_precision_cm = 0
         self.trail_points = []
         self.logger = get_logger()
 
@@ -57,9 +58,9 @@ class RTKPlanner:
             if response.status_code == 200:
                 data = response.json()
                 if data.get('mac') == self.mac:
+                    self.target_precision_cm = int(data.get('precision'))
                     self.trail_points = json.loads(data.get('trail_points').replace("'", "\""))
                     self.logger.info(f"Received new trails: {self.trail_points}.")
-
             response.close()
         except Exception as e:
             self.logger.info(f"Error getting trails {e}")

@@ -93,7 +93,7 @@ if __name__ == "__main__":
     check_updates_interval_s = 5    # Interval for trail pull.
     previous_coordinates = (0, 0)   # To track coordinate changes.
     previous_quality = ""
-    target_threshold_cm = 50  # TODO should be configurable from portal.
+    #target_threshold_cm = 50  # TODO should be configurable from portal.
 
     # --------------------------------------------------
     #
@@ -152,7 +152,7 @@ if __name__ == "__main__":
             dist, target_heading, current_heading = nav.calculate_distance_bearing(micro_nmea.lon, micro_nmea.lat, *rtk_planner.trail_points[0])
             mov.move(current_heading, target_heading, False)
             logger.info(f"POS (current, target): ({micro_nmea.lon, micro_nmea.lat}, {rtk_planner.trail_points[0]}) Distance: {dist}")
-            if dist <= target_threshold_cm:
+            if dist <= rtk_planner.target_precision_cm:
                 logger.info(f"TRAIL POIT REACHED: {rtk_planner.trail_points[0]}")
                 rtk_planner.trail_points.pop(0)
 

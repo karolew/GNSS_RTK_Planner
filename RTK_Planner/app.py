@@ -320,13 +320,14 @@ def register():
 trail_points_for_rover = {"mac": "", "trail_points": ""}
 
 
-@app.route("/trail/upload/<int:rover_id>/<int:trail_id>", methods=["POST"])
-def upload_trail_to_rover(rover_id, trail_id):
+@app.route("/trail/upload/<int:rover_id>/<int:trail_id>/<int:precision>", methods=["POST"])
+def upload_trail_to_rover(rover_id, trail_id, precision):
     global trail_points_for_rover
     rover_mac = query_db("SELECT mac FROM rover WHERE id = ?", [rover_id], one=True)
     trail_points = query_db("SELECT trail_points FROM trail WHERE id = ?", [trail_id], one=True)
     trail_points_dict = dict(trail_points)
     trail_points_for_rover = dict(rover_mac)
+    trail_points_for_rover.update({"precision" : precision})
     trail_points_for_rover.update(trail_points_dict)
     if trail_points_for_rover["mac"] and trail_points_dict["trail_points"]:
         return trail_points_for_rover, 200
