@@ -90,10 +90,9 @@ if __name__ == "__main__":
 
     # Main loop variables.
     check_updates_s = time.time()   # Timer for trail pull.
-    check_updates_interval_s = 5    # Interval for trail pull.
+    check_updates_interval_s = 2    # Interval for trail pull.
     previous_coordinates = (0, 0)   # To track coordinate changes.
     previous_quality = ""
-    #target_threshold_cm = 50  # TODO should be configurable from portal.
 
     # --------------------------------------------------
     #
@@ -125,7 +124,7 @@ if __name__ == "__main__":
                     previous_coordinates = micro_nmea.lat, micro_nmea.lon
                     previous_quality = micro_nmea.quality
             
-            # HTTP pull trails every 5 seconds.
+            # HTTP pull trails every few seconds.
             if time.time() - check_updates_s > check_updates_interval_s:
                 rtk_planner.get_trails()
                 check_updates_s = time.time()

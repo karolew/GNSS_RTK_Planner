@@ -32,10 +32,11 @@ Manual for configuring Pycharm IDE for micropython programming is under this lin
 The file structure on ESP board should look like this:
 ```
 ESP Flash
+|
 │   config.json
 │   calibration.json
-│   main.c
-│   boot.c
+│   main.py
+│   boot.py
 │   navigation.py
 │   rtkplanner.py
 │   px1122r.py
