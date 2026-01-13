@@ -299,8 +299,7 @@ def format_utc_time(time_str):
 @app.route("/rover/register", methods=["POST"])
 def register():
     data = request.json
-    mac_dict = json.loads(data)
-    mac = mac_dict.get("mac")
+    mac = data.get("mac")
     print(f"Rover trying to connect, MAC: {mac}")
     rovers = query_db("SELECT * FROM rover ORDER BY id DESC")
     rovers_list = [dict(rover) for rover in rovers]

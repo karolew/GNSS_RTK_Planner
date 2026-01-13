@@ -10,8 +10,8 @@ It consists of 2 main components:
 
 This is a micropython implementation of GNSS RTK Rover based on ESP32 main board, PX1122R GNSS RTK receiver and electronic compass IMU9.
 The rover requires an internet access to get correction data from NTRIP server, receive target trail and send GNSS coordinates 
-to RTK Planner server. To get correct rover heading it uses electronic compass. When trail is received the rover execute it only when the GNSS 
-quality is a RTK Fix.
+to RTK Planner server. To get correct rover heading it uses electronic compass. When trail is received the rover execute it when the GNSS 
+quality is a RTK Fix, RTK Float or RTK SPS
 
 ### Configuration File
 

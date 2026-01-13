@@ -140,7 +140,7 @@ if __name__ == "__main__":
                 compass_calibration = False
 
             if micro_nmea.quality not in ["SPS Fix", "RTK Fix", "RTK Float"]:
-                logger.info("No RTK fix")
+                logger.info(f"Q: {micro_nmea.quality}")
                 mov.move(-1, -1, True)
                 continue
 

@@ -25,7 +25,7 @@ class RTKPlanner:
     }
 
     def __init__(self, host: str, port: str, mac):
-        self.url = f"http://{host}:{port}"
+        self.url = f"http://{host}:{port}" if port else host
         self.mac = mac
         self.target_precision_cm = 0
         self.trail_points = []
@@ -37,7 +37,7 @@ class RTKPlanner:
             try:
                 response = urequests.post(self.url + "/rover/register",
                                           headers={"Content-Type": "application/json"},
-                                          json=json.dumps({"mac": self.mac}),
+                                          json={"mac": self.mac},
                                           timeout=1)
                 response_code = response.status_code
                 response.close()
@@ -46,10 +46,10 @@ class RTKPlanner:
                     break
                 else:
                     self.logger.info("Rover is NOT registered. Wait for confirmation.")
-                error_indicator_led.stop_blinking()
             except Exception as e:
                 self.logger.info(f"Failed to send mac {self.mac}: {e}")
             time.sleep(2)
+        error_indicator_led.stop_blinking()
 
     def get_trails(self):
         try:
@@ -59,7 +59,7 @@ class RTKPlanner:
                 data = response.json()
                 if data.get('mac') == self.mac:
                     self.target_precision_cm = int(data.get('precision'))
-                    self.trail_points = json.loads(data.get('trail_points').replace("'", "\""))
+                    self.trail_points = json.loads(data.get('trail_points'))
                     self.logger.info(f"Received new trails: {self.trail_points}.")
             response.close()
         except Exception as e:
