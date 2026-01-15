@@ -1,5 +1,5 @@
-import unittest
 import sys
+import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 # Mock MicroPython modules before importing Movement.

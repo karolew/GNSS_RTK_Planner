@@ -1,17 +1,10 @@
+"""
+The microNMEA must contain __init__.py file.
+"""
+
 import sys
 import unittest
-from unittest.mock import Mock, MagicMock, patch
-
-
-class MockPrecise:
-    def __init__(self, coord_str):
-        parts = coord_str.split('.')
-        self.whole_part_with_sign = parts[0]
-        # Pad decimal part to 6 digits with zeros.
-        if len(parts) > 1:
-            self.decimal_part = parts[1][:10].ljust(10, '0')
-        else:
-            self.decimal_part = '0000000000'
+from unittest.mock import MagicMock, Mock, patch
 
 sys.modules['machine'] = MagicMock()
 sys.modules['logger'] = MagicMock()
@@ -23,9 +16,6 @@ sys.modules['microMX1508.microMX1508'] = MagicMock()
 # Create mock module with MockPrecise.
 mock_microNMEA = MagicMock()
 mock_microNMEA_microNMEA = MagicMock()
-mock_microNMEA_microNMEA.Precise = MockPrecise
-sys.modules['microNMEA'] = mock_microNMEA
-sys.modules['microNMEA.microNMEA'] = mock_microNMEA_microNMEA
 
 from navigation import Navigation
 

@@ -80,6 +80,10 @@ class Movement:
 
 
 class Navigation:
+    CENTIMETERS_PER_DEGREE_LAT_PRECISE = Precise("11113292")
+    DEG_TO_RAD_PRECISE = Precise("0.017453292519943295")
+    HALF_PRECISE = Precise("0.5")
+
     def __init__(self, i2c: I2C) -> None:
         self.compass = None
         self.logger = get_logger()
@@ -89,175 +93,49 @@ class Navigation:
             self.logger.info(f"ERROR Compass not started: {e}")
             sys.exit(1)
 
-    def isqrt(self, n):
-        """Integer square root using Newton's method"""
-        if n == 0:
-            return 0
-        x = n
-        y = (x + 1) // 2
-        while y < x:
-            x = y
-            y = (x + n // x) // 2
-        return x
-
-    def atan2_int(self, y, x):
-        """
-        Integer atan2 approximation returning angle in degrees * 100
-        Input: y, x in any integer units
-        Output: angle in degrees * 100 (0-36000 representing 0-360°)
-        """
-        if x == 0 and y == 0:
-            return 0
-
-        # Determine octant and calculate base angle
-        abs_y = abs(y)
-        abs_x = abs(x)
-
-        # Calculate ratio and angle using polynomial approximation
-        if abs_x > abs_y:
-            # More horizontal
-            ratio = (abs_y * 10000) // abs_x
-            # atan(r) ≈ r - r³/3 + r⁵/5 (for small r, r in radians)
-            # Convert to degrees: multiply by 180/π ≈ 5730/10000
-            ratio_sq = (ratio * ratio) // 10000
-            ratio_cu = (ratio_sq * ratio) // 10000
-            angle = (ratio * 5730) // 10000 - (ratio_cu * 1910) // 10000
-
-            if x > 0 and y >= 0:  # Q1
-                return angle
-            elif x < 0 and y >= 0:  # Q2
-                return 18000 - angle
-            elif x < 0 and y < 0:  # Q3
-                return 18000 + angle
-            else:  # Q4
-                return 36000 - angle
-        else:
-            # More vertical
-            ratio = (abs_x * 10000) // abs_y
-            ratio_sq = (ratio * ratio) // 10000
-            ratio_cu = (ratio_sq * ratio) // 10000
-            angle = 9000 - ((ratio * 5730) // 10000 - (ratio_cu * 1910) // 10000)
-
-            if x >= 0 and y > 0:  # Q1
-                return angle
-            elif x < 0 and y > 0:  # Q2
-                return 18000 - angle
-            elif x < 0 and y < 0:  # Q3
-                return 18000 + angle
-            else:  # Q4
-                return 36000 - angle
-
-    def cos_int(self, lat_microdeg):
-        """
-        Calculate cosine for latitude correction
-        Input: latitude in microdegrees (degrees * 1000000)
-        Output: cosine * 10000
-        """
-        # Convert to degrees * 100 for calculation
-        deg = lat_microdeg // 10000
-
-        # Normalize to 0-36000
-        deg = deg % 36000
-        if deg < 0:
-            deg += 36000
-
-        # Use symmetry to work in first quadrant (0-9000)
-        if deg <= 9000:
-            angle = deg
-            sign = 1
-        elif deg <= 18000:
-            angle = 18000 - deg
-            sign = -1
-        elif deg <= 27000:
-            angle = deg - 18000
-            sign = -1
-        else:
-            angle = 36000 - deg
-            sign = 1
-
-        # Convert to radians * 10000: angle * π / 180
-        # π / 180 ≈ 0.017453 ≈ 1745 / 100000
-        rad_x10000 = (angle * 1745) // 1000
-
-        # Taylor series: cos(x) ≈ 1 - x²/2 + x⁴/24
-        # Working with 10000 as base unit
-        rad_sq = (rad_x10000 * rad_x10000) // 10000
-        rad_4 = (rad_sq * rad_sq) // 10000
-
-        cos_val = 10000 - (rad_sq * 5000) // 10000 + (rad_4 * 417) // 10000
-
-        return cos_val * sign
-
-    def str_to_microdegrees(self, coord_str):
-        """
-        Convert coordinate string to microdegrees (degrees * 1,000,000)
-        Handles up to 9 decimal places without using float
-        Example: "49.951389" -> 49951389
-        """
-        p = Precise(coord_str)
-        integer_part = p.whole_part_with_sign
-        decimal_part = p.decimal_part[:6]
-        sign = -1 if "-" == integer_part[0] else 1
-        microdeg = int(integer_part) * 1000000 + sign * int(decimal_part)
-        return microdeg
-
     def calculate_distance_bearing(self, lon1_str, lat1_str, lon2_str, lat2_str):
         """
-        Calculate distance (cm) and bearing (degrees * 100) between two GNSS points.
-        Integer-only math for ESP32 speed, avoids overflow.
-        lon1_str, lat1_str: Point A coordinates as strings (e.g. '19.411551123387607', '51.70590960868671')
-        lon2_str, lat2_str: Point B coordinates as strings (e.g. '19.411551123388000', '51.70590960868700')
+        Calculate distance (cm) and bearing (degrees) between two GNSS points.
+        - Integer-only math,
+        - Get RTK precision on 32bit platforms,
+        - Optimised for speed,
+        - Avoids overflow.
+
+        Parameters:
+        lon1_str, lat1_str:
+            Point A coordinates as strings (e.g. '19.411551123387607', '51.70590960868671')
+        lon2_str, lat2_str:
+            Point B coordinates as strings (e.g. '19.411551123388000', '51.70590960868700')
+
         Returns:
-            tuple: (distance_cm, bearing_deg_x100, heading_deg)
+            tuple: (distance_cm, bearing, heading)
                    distance_cm: distance in centimeters
-                   bearing_deg_x100: bearing * 100 (e.g., 1700 = 17.00°)
+                   bearing: bearing (e.g.17.00°)
+                   heading: heading read from compass (e.g.10.00°)
         """
-        # Convert string coordinates to integers (microdegrees: degrees * 1,000,000)
-        lon1 = self.str_to_microdegrees(lon1_str)
-        lat1 = self.str_to_microdegrees(lat1_str)
-        lon2 = self.str_to_microdegrees(lon2_str)
-        lat2 = self.str_to_microdegrees(lat2_str)
+        lon1 = Precise(lon1_str)
+        lat1 = Precise(lat1_str)
+        lon2 = Precise(lon2_str)
+        lat2 = Precise(lat2_str)
 
-        # Calculate differences in microdegrees
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
+        lat1_rad = lat1 * Navigation.DEG_TO_RAD_PRECISE
+        lat2_rad = lat2 * Navigation.DEG_TO_RAD_PRECISE
+        delta_lat = lat2 - lat1
+        delta_lon = lon2 - lon1
 
-        # Average latitude for longitude correction
-        lat_avg = (lat1 + lat2) // 2
+        # Meters per degree at average latitude (flat Earth approximation).
+        lat_avg_rad = (lat1_rad + lat2_rad) * Navigation.HALF_PRECISE
+        centimeters_per_deg_lat = Navigation.CENTIMETERS_PER_DEGREE_LAT_PRECISE
+        centimeters_per_deg_lon = Navigation.CENTIMETERS_PER_DEGREE_LAT_PRECISE * Precise.cos(lat_avg_rad)
 
-        # Get cos(lat_avg), result is * 10000
-        cos_lat = self.cos_int(lat_avg)
+        # Convert delta degrees to centimeters.
+        dx = delta_lon * centimeters_per_deg_lon
+        dy = delta_lat * centimeters_per_deg_lat
 
-        # Earth's circumference / 360 = 111320 meters per degree
-        # = 111.32 meters per 0.001 degree (millidegree)
-        # = 0.11132 meters per microdegree
-        # = 11.132 cm per microdegree
+        # Calculate bearing (0° = North, 90° = East).
+        bearing_rad = Precise.atan2(dx, dy)
+        bearing = round((float(bearing_rad.value_str) * 57.29578 + 360) % 360, 1)  # 180 / math.pi
 
-        # Calculate in millimeters to avoid overflow
-        # 1 microdegree = 111.32 mm
-        # Split the constant: 111.32 = 11132 / 100
-
-        # y (north-south) in millimeters - uses LATITUDE difference
-        y_mm = (dlat * 1113) // 10  # dlat * 111.3
-
-        # x (east-west) in millimeters, corrected for latitude - uses LONGITUDE difference
-        # x = dlon * cos(lat) * 111.32
-        # cos_lat is * 10000, so divide by 10000
-        # To avoid overflow: (dlon * cos_lat) might overflow
-        # Rearrange: (dlon * 1113 * cos_lat) / (10 * 10000)
-        x_mm = (dlon * cos_lat * 1113) // 100000
-
-        # Calculate distance in millimeters
-        dist_mm = self.isqrt(x_mm * x_mm + y_mm * y_mm)
-
-        # Convert to centimeters (round to nearest)
-        dist_cm = (dist_mm + 5) // 10
-
-        # Calculate bearing using integer atan2
-        bearing_x100 = self.atan2_int(x_mm, y_mm)
-
-        # Ensure bearing is positive (0-36000)
-        if bearing_x100 < 0:
-            bearing_x100 += 36000
-
-        return dist_cm, bearing_x100//100, self.compass.get_tilt_compensated_heading()
+        # Calculate distance using Pythagorean theorem (flat earth assumption).
+        distance_cm = round(float(Precise.sqrt(dx * dx + dy * dy).value_str), 1)
+        return distance_cm, bearing, self.compass.get_tilt_compensated_heading()
